@@ -1,0 +1,42 @@
+* { box-sizing: border-box; }
+body { margin: 0; background: #111009; }
+::selection { background: #C9A84C33; }
+textarea { outline: none; }
+textarea::placeholder { color: #4A4438; font-style: italic; }
+input { outline: none; }
+input::placeholder { color: #4A4438; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2E2A24; border-radius: 2px; }
+.submit-btn:hover:not([disabled]) { background: #D4B050 !important; }
+.filter-btn { transition: all 0.15s; }
+.filter-btn:hover { opacity: 0.85; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* Scroll rows default to wrapping */
+.scroll-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .scroll-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .scroll-row::-webkit-scrollbar { display: none; }
+  .scroll-row > * { flex-shrink: 0; }
+}

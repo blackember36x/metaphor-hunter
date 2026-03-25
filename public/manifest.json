@@ -1,0 +1,17 @@
+{
+  "name": "Metaphor Hunter",
+  "short_name": "Metaphor",
+  "description": "Capture metaphors and observations from daily life",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111009",
+  "theme_color": "#111009",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
