@@ -1,9 +1,41 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 
+// ─── Font presets ────────────────────────────────────────────────────────────
+const FONT_PRESETS = {
+  classic: {
+    name: "Classic",
+    serif:   "'Cormorant Garamond', Georgia, serif",
+    display: "'DM Serif Display', Georgia, serif",
+    body:    "'Cormorant Garamond', Georgia, serif",
+    bodySize: 15,
+  },
+  lora: {
+    name: "Lora + Nunito",
+    serif:   "'Lora', Georgia, serif",
+    display: "'Lora', Georgia, serif",
+    body:    "'Nunito', 'Helvetica Neue', sans-serif",
+    bodySize: 15,
+  },
+  playfair: {
+    name: "Playfair + Karla",
+    serif:   "'Playfair Display', Georgia, serif",
+    display: "'Playfair Display', Georgia, serif",
+    body:    "'Karla', 'Helvetica Neue', sans-serif",
+    bodySize: 15,
+  },
+  merriweather: {
+    name: "Merriweather",
+    serif:   "'Merriweather', Georgia, serif",
+    display: "'Merriweather', Georgia, serif",
+    body:    "'Merriweather', Georgia, serif",
+    bodySize: 14.5,
+  },
+};
+
+const FONT_KEY = "lucid_font_v1";
+
 // ─── Design tokens ───────────────────────────────────────────────────────────
 const SHARED = {
-  serif:     "'Cormorant Garamond', Georgia, serif",
-  display:   "'DM Serif Display', Georgia, serif",
   mono:      "'JetBrains Mono', monospace",
   ease:      "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
 };
@@ -24,22 +56,22 @@ const THEMES = {
   },
   light: {
     ...SHARED,
-    bg:        "#F4EDE4",
-    surface:   "#EDE5DA",
-    border:    "#D4C8B8",
-    text:      "#2A2420",
-    textMuted: "#6E6258",
-    textDim:   "#8E8072",
-    textFaint: "#B8AA9A",
-    accent:    "#9E7A4E",
-    accentSoft:"#9E7A4E33",
-    danger:    "#B85A42",
+    bg:        "#D6DECE",
+    surface:   "#C8D1BF",
+    border:    "#B3BDA6",
+    text:      "#2C3328",
+    textMuted: "#4A5544",
+    textDim:   "#6B7A62",
+    textFaint: "#8A9880",
+    accent:    "#7A6B4E",
+    accentSoft:"#7A6B4E33",
+    danger:    "#A85A42",
   },
 };
 
 const THEME_KEY = "mh_theme_v1";
 // Backwards-compatible global T — will be overridden per render
-let T = THEMES.dark;
+let T = { ...THEMES.dark, ...FONT_PRESETS.lora };
 
 // ─── Mobile detection ────────────────────────────────────────────────────────
 function useIsMobile() {
@@ -234,7 +266,7 @@ function TagColorPicker({ tag, customColors, onSelect, onClose }) {
       boxShadow: "0 12px 40px #00000044", minWidth: 180,
     }}>
       <span style={{
-        fontFamily: T.serif, fontSize: 13,
+        fontFamily: T.body, fontSize: 13,
         color: T.textMuted, fontStyle: "italic",
       }}>
         color for "{tag}"
@@ -266,7 +298,7 @@ function TagColorPicker({ tag, customColors, onSelect, onClose }) {
           style={{
             background: "none", border: `1px solid ${T.border}`, borderRadius: 8,
             padding: "5px 12px", cursor: "pointer",
-            fontFamily: T.serif, fontSize: 12,
+            fontFamily: T.body, fontSize: 12,
             color: T.textDim, fontStyle: "italic",
           }}
         >
@@ -291,7 +323,7 @@ function TagAnnotation({ tag, onClick, removable, customColors, mobile: mobilePr
         display: "inline-flex", alignItems: "center", gap: 4,
         padding: isMobile ? "3px 0" : "2px 0",
         color: c.text + "CC",
-        fontSize: 12, fontFamily: T.serif,
+        fontSize: 13, fontFamily: T.body,
         fontStyle: "italic", letterSpacing: "0.02em",
         cursor: onClick ? "pointer" : "default",
         ...(isMobile ? { minHeight: 28 } : {}),
@@ -384,8 +416,8 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
     background: "none", border: "none", cursor: "pointer",
     padding: mobile ? "8px 10px" : "4px 6px",
     borderRadius: 6,
-    fontFamily: T.serif, fontStyle: "italic",
-    fontSize: mobile ? 13 : 12,
+    fontFamily: T.body, fontStyle: "italic",
+    fontSize: mobile ? 14 : 13,
     transition: `opacity 0.2s ${T.ease}`,
     ...(mobile ? { minWidth: 36, minHeight: 36, display: "inline-flex", alignItems: "center", justifyContent: "center" } : {}),
   };
@@ -406,7 +438,7 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
           rows={4}
           style={{
             width: "100%", background: "transparent", border: "none", resize: "none",
-            fontFamily: T.serif,
+            fontFamily: T.body,
             fontSize: 19, lineHeight: 1.7, color: T.text,
             fontWeight: 300, fontStyle: "italic", letterSpacing: "0.01em",
             outline: "none",
@@ -425,7 +457,7 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
             placeholder={editTags.length === 0 ? "add tags…" : ""}
             style={{
               background: "transparent", border: "none", outline: "none",
-              fontFamily: T.serif, fontStyle: "italic",
+              fontFamily: T.body, fontStyle: "italic",
               fontSize: 13, color: T.textMuted,
               width: 130, flexShrink: 0,
             }}
@@ -461,7 +493,7 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
       {/* Observation text */}
       <p style={{
         margin: 0,
-        fontFamily: T.serif,
+        fontFamily: T.body,
         fontSize: 19, lineHeight: 1.75,
         color: T.text, fontWeight: 300,
         fontStyle: "italic", letterSpacing: "0.01em",
@@ -483,7 +515,7 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
           onClick={() => setShowFull((p) => !p)}
           title={formatFull(entry.createdAt)}
           style={{
-            fontFamily: T.serif, fontSize: 13,
+            fontFamily: T.body, fontSize: 14,
             color: T.textDim, fontStyle: "italic",
             cursor: "pointer", whiteSpace: "nowrap", userSelect: "none",
           }}
@@ -509,7 +541,7 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
         <span
           onClick={() => setShowHistory((p) => !p)}
           style={{
-            fontFamily: T.serif, fontSize: 12,
+            fontFamily: T.body, fontSize: 13,
             color: T.textDim, fontStyle: "italic",
             cursor: "pointer", userSelect: "none",
           }}
@@ -527,7 +559,7 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
           marginTop: 4,
         }}>
           <p style={{
-            margin: 0, fontFamily: T.serif,
+            margin: 0, fontFamily: T.body,
             fontSize: 15, lineHeight: 1.6, color: T.textDim,
             fontStyle: "italic", textDecoration: "line-through",
             textDecorationColor: T.textFaint,
@@ -540,7 +572,7 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
             </div>
           )}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontFamily: T.serif, fontSize: 11, color: T.textDim, fontStyle: "italic" }}>
+            <span style={{ fontFamily: T.body, fontSize: 11, color: T.textDim, fontStyle: "italic" }}>
               {formatFull(h.editedAt)}
             </span>
             <button
@@ -572,7 +604,7 @@ function SaveBadge({ status }) {
   if (!styles[status]) return null;
   return (
     <span style={{
-      fontFamily: T.serif, fontStyle: "italic",
+      fontFamily: T.body, fontStyle: "italic",
       fontSize: 12, color: styles[status].color,
       transition: `opacity 0.3s ${T.ease}`,
     }}>
@@ -606,7 +638,7 @@ function Onboarding({ onComplete }) {
         style={{
           position: "absolute", top: mobile ? 20 : 28, right: mobile ? 20 : 28,
           background: "none", border: "none", cursor: "pointer",
-          fontFamily: T.serif, fontSize: 14,
+          fontFamily: T.body, fontSize: 14,
           color: T.textDim, fontStyle: "italic",
         }}
       >
@@ -625,7 +657,7 @@ function Onboarding({ onComplete }) {
         </h2>
 
         <p style={{
-          fontFamily: T.serif,
+          fontFamily: T.body,
           fontSize: mobile ? 17 : 19, lineHeight: 1.75,
           color: T.textMuted, margin: "0 0 20px",
         }}>
@@ -634,7 +666,7 @@ function Onboarding({ onComplete }) {
 
         {current.accent && (
           <p style={{
-            fontFamily: T.serif,
+            fontFamily: T.body,
             fontSize: mobile ? 15 : 16, fontStyle: "italic",
             color: T.accent, lineHeight: 1.7, margin: 0,
             opacity: 0.85,
@@ -699,7 +731,7 @@ function Onboarding({ onComplete }) {
 }
 
 // ─── Settings panel (iOS sheet on mobile) ────────────────────────────────────
-function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, theme, onToggleTheme }) {
+function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, theme, onToggleTheme, fontKey, onChangeFont }) {
   const mobile = useIsMobile();
   const [confirmReset, setConfirmReset] = useState(false);
   const fileInputRef = useRef(null);
@@ -707,7 +739,7 @@ function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, theme, 
   const rowBtn = {
     background: "none", border: "none", width: "100%",
     padding: "16px 0", cursor: "pointer", textAlign: "left",
-    fontFamily: T.serif, fontSize: 15, color: T.textMuted,
+    fontFamily: T.body, fontSize: 15, color: T.textMuted,
     fontStyle: "italic", borderBottom: `1px solid ${T.border}44`,
     transition: `color 0.2s ${T.ease}`,
   };
@@ -745,7 +777,7 @@ function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, theme, 
           {!mobile && (
             <button onClick={onClose} style={{
               background: "none", border: "none", cursor: "pointer",
-              fontFamily: T.serif, fontSize: 18, color: T.textDim,
+              fontFamily: T.body, fontSize: 18, color: T.textDim,
             }}>×</button>
           )}
         </div>
@@ -754,6 +786,35 @@ function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, theme, 
         <button onClick={onToggleTheme} style={rowBtn}>
           {theme === "dark" ? "Light mode" : "Dark mode"}
         </button>
+
+        {/* Font selector */}
+        <div style={{ padding: "16px 0", borderBottom: `1px solid ${T.border}44` }}>
+          <p style={{
+            margin: "0 0 10px", fontFamily: T.body, fontSize: 13,
+            color: T.textDim, fontStyle: "italic",
+          }}>
+            Typography
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {Object.entries(FONT_PRESETS).map(([key, preset]) => (
+              <button
+                key={key}
+                onClick={() => onChangeFont(key)}
+                style={{
+                  background: key === fontKey ? T.accent : T.bg,
+                  color: key === fontKey ? T.bg : T.textMuted,
+                  border: `1px solid ${key === fontKey ? T.accent : T.border}`,
+                  borderRadius: 20, padding: "8px 16px",
+                  cursor: "pointer", fontSize: 13,
+                  fontFamily: preset.body,
+                  transition: `all 0.2s ${T.ease}`,
+                }}
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <button onClick={() => { exportData(); }} style={rowBtn}>
           Export backup
@@ -794,7 +855,7 @@ function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, theme, 
           {confirmReset ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <p style={{
-                margin: 0, fontFamily: T.serif,
+                margin: 0, fontFamily: T.body,
                 fontSize: 14, color: T.danger, fontStyle: "italic", lineHeight: 1.6,
               }}>
                 This will permanently delete all observations, tags, and settings.
@@ -855,7 +916,7 @@ function MilestoneBanner({ message }) {
       maxWidth: "calc(100vw - 32px)",
     }}>
       <span style={{
-        fontFamily: T.serif,
+        fontFamily: T.body,
         fontSize: 15, fontStyle: "italic",
         color: T.text, lineHeight: 1.4,
       }}>
@@ -1368,7 +1429,7 @@ function GraphView({ entries, customColors, onTagClick }) {
       />
       <div style={{
         position: "absolute", top: 14, right: 14,
-        fontFamily: T.serif, fontSize: 11,
+        fontFamily: T.body, fontSize: 11,
         color: T.textDim, fontStyle: "italic",
         background: T.surface + "CC", padding: "6px 14px", borderRadius: 100,
         pointerEvents: "none",
@@ -1446,7 +1507,7 @@ function TimeFilterBar({ timeFilter, setTimeFilter, setDisplayCount, entries }) 
     border: "none",
     background: active ? T.accentSoft : "transparent",
     color: active ? T.accent : T.textDim,
-    fontFamily: T.serif, fontStyle: "italic",
+    fontFamily: T.body, fontStyle: "italic",
     fontSize: 13, cursor: "pointer",
     whiteSpace: "nowrap",
     transition: `all 0.2s ${T.ease}`,
@@ -1559,7 +1620,7 @@ function ControlsDrawer({ open, searchText, setSearchText, allTags, activeFilter
           style={{
             width: "100%", background: "transparent",
             border: "none", borderBottom: `1px solid ${T.border}`,
-            padding: "10px 0", fontFamily: T.serif, fontStyle: "italic",
+            padding: "10px 0", fontFamily: T.body, fontStyle: "italic",
             fontSize: 15, color: T.text,
             outline: "none", transition: `border-color 0.25s ${T.ease}`,
           }}
@@ -1572,7 +1633,7 @@ function ControlsDrawer({ open, searchText, setSearchText, allTags, activeFilter
             style={{
               position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)",
               background: "none", border: "none", cursor: "pointer",
-              fontFamily: T.serif, fontSize: 16, color: T.textDim,
+              fontFamily: T.body, fontSize: 16, color: T.textDim,
             }}
           >
             ×
@@ -1589,7 +1650,7 @@ function ControlsDrawer({ open, searchText, setSearchText, allTags, activeFilter
             style={{
               background: "none", border: "none", borderRadius: 6,
               padding: "2px 4px", cursor: "pointer",
-              fontFamily: T.serif, fontSize: 13,
+              fontFamily: T.body, fontSize: 13,
               color: colorMode ? T.accent : T.textDim,
               fontStyle: "italic",
             }}
@@ -1615,7 +1676,7 @@ function ControlsDrawer({ open, searchText, setSearchText, allTags, activeFilter
                     border: "none",
                     background: active ? (c ? c.bg + "AA" : T.accentSoft) : "transparent",
                     color: active ? (c ? c.text : T.accent) : T.textDim,
-                    fontFamily: T.serif, fontStyle: "italic",
+                    fontFamily: T.body, fontStyle: "italic",
                     fontSize: 13, cursor: "pointer",
                     outline: colorMode && tag ? `1px dashed ${T.accentSoft}` : "none",
                     outlineOffset: 2,
@@ -1643,7 +1704,7 @@ function ControlsDrawer({ open, searchText, setSearchText, allTags, activeFilter
       {/* Search result count */}
       {searchText.trim() && (
         <p style={{
-          fontFamily: T.serif, fontSize: 13,
+          fontFamily: T.body, fontSize: 13,
           color: T.textDim, fontStyle: "italic", marginBottom: 8,
         }}>
           {entries.length} result{entries.length !== 1 ? "s" : ""}
@@ -1659,19 +1720,27 @@ export default function App() {
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem(THEME_KEY) || "dark"; } catch (_) { return "dark"; }
   });
+  const [fontKey, setFontKey] = useState(() => {
+    try { return localStorage.getItem(FONT_KEY) || "lora"; } catch (_) { return "lora"; }
+  });
 
-  // Update global T and body whenever theme changes
-  T = THEMES[theme] || THEMES.dark;
+  // Update global T and body whenever theme or font changes
+  const fontPreset = FONT_PRESETS[fontKey] || FONT_PRESETS.lora;
+  T = { ...(THEMES[theme] || THEMES.dark), ...fontPreset };
   useEffect(() => {
     document.body.style.background = T.bg;
     document.body.style.color = T.text;
     document.querySelector('meta[name="theme-color"]')?.setAttribute("content", T.bg);
-  }, [theme]);
+  }, [theme, fontKey]);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
     localStorage.setItem(THEME_KEY, next);
+  };
+  const changeFont = (key) => {
+    setFontKey(key);
+    localStorage.setItem(FONT_KEY, key);
   };
 
   const [entries,      setEntries]      = useState([]);
@@ -1899,7 +1968,7 @@ export default function App() {
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
       <p style={{
-        fontFamily: T.serif, fontStyle: "italic",
+        fontFamily: T.body, fontStyle: "italic",
         fontSize: 18, color: T.textDim,
       }}>
         loading…
@@ -1922,6 +1991,8 @@ export default function App() {
           onReplayOnboarding={() => setShowOnboarding(true)}
           theme={theme}
           onToggleTheme={toggleTheme}
+          fontKey={fontKey}
+          onChangeFont={changeFont}
         />
       )}
 
@@ -1942,7 +2013,7 @@ export default function App() {
             lucid
           </h1>
           <p style={{
-            margin: "2px 0 0", fontFamily: T.serif,
+            margin: "2px 0 0", fontFamily: T.body,
             fontSize: 12, color: T.textDim, fontStyle: "italic",
             letterSpacing: "0.04em",
           }}>
@@ -1959,7 +2030,7 @@ export default function App() {
               background: showControls ? T.accentSoft : "none",
               border: "none", borderRadius: 100,
               padding: "7px 12px", cursor: "pointer",
-              fontFamily: T.serif, fontSize: 14, fontStyle: "italic",
+              fontFamily: T.body, fontSize: 14, fontStyle: "italic",
               color: showControls ? T.accent : T.textDim,
             }}
           >
@@ -1973,7 +2044,7 @@ export default function App() {
             style={{
               background: "none", border: "none",
               padding: "7px 12px", cursor: "pointer",
-              fontFamily: T.serif, fontSize: 14, fontStyle: "italic",
+              fontFamily: T.body, fontSize: 14, fontStyle: "italic",
               color: T.textDim,
             }}
           >
@@ -2014,7 +2085,7 @@ export default function App() {
             rows={mobile ? 2 : 3}
             style={{
               width: "100%", background: "transparent", border: "none", resize: "none",
-              fontFamily: T.serif,
+              fontFamily: T.body,
               fontSize: mobile ? 20 : 22, lineHeight: 1.75, color: T.text,
               fontWeight: 300,
               fontStyle: text.length > 0 ? "italic" : "normal",
@@ -2043,7 +2114,7 @@ export default function App() {
               placeholder={pendingTags.length === 0 ? "tags…" : ""}
               style={{
                 background: "transparent", border: "none",
-                fontFamily: T.serif, fontStyle: "italic",
+                fontFamily: T.body, fontStyle: "italic",
                 fontSize: 13, color: T.textMuted,
                 width: pendingTags.length > 0 ? 100 : 60, flexShrink: 0,
               }}
@@ -2116,14 +2187,14 @@ export default function App() {
             {(activeFilter || timeFilter !== "all") && !showControls && (
               <div style={{
                 display: "flex", gap: 8, alignItems: "center", marginBottom: 16,
-                fontFamily: T.serif, fontSize: 13, fontStyle: "italic", color: T.textDim,
+                fontFamily: T.body, fontSize: 13, fontStyle: "italic", color: T.textDim,
               }}>
                 {activeFilter && (
                   <span>
                     {activeFilter}
                     <button onClick={() => setActiveFilter(null)} style={{
                       background: "none", border: "none", cursor: "pointer",
-                      color: T.textDim, fontFamily: T.serif, fontSize: 13, marginLeft: 4,
+                      color: T.textDim, fontFamily: T.body, fontSize: 13, marginLeft: 4,
                     }}>×</button>
                   </span>
                 )}
@@ -2132,7 +2203,7 @@ export default function App() {
                     {timeFilter === "today" ? "today" : timeFilter === "week" ? "this week" : timeFilter}
                     <button onClick={() => setTimeFilter("all")} style={{
                       background: "none", border: "none", cursor: "pointer",
-                      color: T.textDim, fontFamily: T.serif, fontSize: 13, marginLeft: 4,
+                      color: T.textDim, fontFamily: T.body, fontSize: 13, marginLeft: 4,
                     }}>×</button>
                   </span>
                 )}
@@ -2149,7 +2220,7 @@ export default function App() {
                       : timeFilter !== "all" ? "Nothing in this period."
                       : "Your journal is empty."}
                   </p>
-                  <p style={{ fontFamily: T.serif, fontSize: 14, marginTop: 8, fontStyle: "italic" }}>
+                  <p style={{ fontFamily: T.body, fontSize: 14, marginTop: 8, fontStyle: "italic" }}>
                     {searchText ? "Try a different search."
                       : "Look around you. What catches your attention?"}
                   </p>
@@ -2180,7 +2251,7 @@ export default function App() {
                         className="press"
                         style={{
                           background: "none", border: "none", cursor: "pointer",
-                          fontFamily: T.serif, fontSize: 14, fontStyle: "italic",
+                          fontFamily: T.body, fontSize: 14, fontStyle: "italic",
                           color: T.textMuted,
                         }}
                       >
@@ -2192,7 +2263,7 @@ export default function App() {
                         className="press"
                         style={{
                           background: "none", border: "none", cursor: "pointer",
-                          fontFamily: T.serif, fontSize: 14, fontStyle: "italic",
+                          fontFamily: T.body, fontSize: 14, fontStyle: "italic",
                           color: T.textDim,
                         }}
                       >
@@ -2208,7 +2279,7 @@ export default function App() {
                         className="press"
                         style={{
                           background: "none", border: "none", cursor: "pointer",
-                          fontFamily: T.serif, fontSize: 14, fontStyle: "italic",
+                          fontFamily: T.body, fontSize: 14, fontStyle: "italic",
                           color: T.textDim,
                         }}
                       >
@@ -2223,7 +2294,7 @@ export default function App() {
             {/* ── Footer ── */}
             <div style={{ marginTop: 48, textAlign: "center", padding: "0 20px" }}>
               <p style={{
-                fontFamily: T.serif,
+                fontFamily: T.body,
                 fontSize: 14, fontStyle: "italic",
                 color: T.textFaint, lineHeight: 1.8, margin: 0,
               }}>
