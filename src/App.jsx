@@ -222,13 +222,28 @@ const getTagColor = (tag, customColors = {}) => {
   return getDefaultTagColor(tag);
 };
 
-// ─── Entry pastel color (deterministic from id) ─────────────────────────────
+// ─── Entry pastel color (deterministic from id, returns hex) ─────────────────
 function entryPastelColor(id) {
   let hash = 0;
   const s = String(id);
   for (let i = 0; i < s.length; i++) hash = ((hash << 5) - hash + s.charCodeAt(i)) | 0;
   const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 45%, 72%)`;
+  // Convert HSL to hex so canvas alpha suffixes work
+  const h = hue / 360;
+  const s2 = 0.45, l = 0.72;
+  const hue2rgb = (p, q, t) => {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1/6) return p + (q - p) * 6 * t;
+    if (t < 1/2) return q;
+    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+    return p;
+  };
+  const q = l < 0.5 ? l * (1 + s2) : l + s2 - l * s2;
+  const p = 2 * l - q;
+  const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+  const g = Math.round(hue2rgb(p, q, h) * 255);
+  const b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
 }
 
 // ─── Timestamp helpers ───────────────────────────────────────────────────────
@@ -1906,11 +1921,11 @@ function GraphView({ entries, customColors, onTagClick }) {
         </button>
       </div>
       <div style={{
-        position: "absolute", top: 14, right: 14,
+        position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)",
         fontFamily: T.body, fontSize: 11,
         color: T.textDim, fontStyle: "italic",
         background: T.surface + "CC", padding: "6px 14px", borderRadius: 100,
-        pointerEvents: "none",
+        pointerEvents: "none", whiteSpace: "nowrap",
       }}>
         {graphMode === "graph" ? "drag · scroll to zoom · double-click tag to filter" : "scroll to zoom · pan to explore"}
       </div>
