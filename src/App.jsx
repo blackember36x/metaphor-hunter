@@ -222,6 +222,15 @@ const getTagColor = (tag, customColors = {}) => {
   return getDefaultTagColor(tag);
 };
 
+// ─── Entry pastel color (deterministic from id) ─────────────────────────────
+function entryPastelColor(id) {
+  let hash = 0;
+  const s = String(id);
+  for (let i = 0; i < s.length; i++) hash = ((hash << 5) - hash + s.charCodeAt(i)) | 0;
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 45%, 72%)`;
+}
+
 // ─── Timestamp helpers ───────────────────────────────────────────────────────
 function formatRelative(iso) {
   const d = new Date(iso);
@@ -321,10 +330,13 @@ function TagAnnotation({ tag, onClick, removable, customColors, mobile: mobilePr
       title={removable ? "Remove" : `Filter by "${tag}"`}
       style={{
         display: "inline-flex", alignItems: "center", gap: 4,
-        padding: isMobile ? "3px 0" : "2px 0",
-        color: c.text + "CC",
+        padding: isMobile ? "4px 12px" : "3px 10px",
+        background: c.bg + "55",
+        color: c.text,
         fontSize: 13, fontFamily: T.body,
         fontStyle: "italic", letterSpacing: "0.02em",
+        borderRadius: 100,
+        border: `1px solid ${c.dot}22`,
         cursor: onClick ? "pointer" : "default",
         ...(isMobile ? { minHeight: 28 } : {}),
       }}
@@ -730,10 +742,114 @@ function Onboarding({ onComplete }) {
   );
 }
 
+// ─── Sample data generator ───────────────────────────────────────────────────
+function generateSampleData() {
+  const SAMPLE_TAGS = ["nature", "light", "sound", "texture", "people", "motion", "color", "smell", "weather", "stillness"];
+
+  const OBSERVATIONS = [
+    { text: "The way morning light catches dust particles in the stairwell", tags: ["light"], },
+    { text: "A child humming an unrecognizable tune on the bus", tags: ["sound", "people"], },
+    { text: "Frost patterns on the car window — each one a tiny fern", tags: ["nature", "texture"], },
+    { text: "The hush that falls over a park just before sunset", tags: ["stillness", "nature"], },
+    { text: "Rain drumming on a metal awning, syncopated and relentless", tags: ["sound", "weather"], },
+    { text: "An old man's hands folding and unfolding a newspaper on the train", tags: ["people", "motion"], },
+    { text: "The particular green of new leaves against a grey sky", tags: ["color", "nature"], },
+    { text: "Coffee grounds smell drifting from a door propped open with a brick", tags: ["smell"], },
+    { text: "Shadow of a bird crossing my notebook page", tags: ["motion", "light"], },
+    { text: "The weight of fog pressing down on the neighborhood at 7am", tags: ["weather", "stillness"], },
+    { text: "A crack in the sidewalk with three blades of grass pushing through", tags: ["nature", "texture"], },
+    { text: "The sound of someone laughing two floors up — muffled, joyful", tags: ["sound", "people"], },
+    { text: "Wet asphalt reflecting neon signs after the rain", tags: ["light", "color", "weather"], },
+    { text: "The roughness of a brick wall under my palm while waiting", tags: ["texture", "stillness"], },
+    { text: "A dog tilting its head at a sound I can't hear", tags: ["motion", "sound"], },
+    { text: "Lavender growing wild at the edge of a parking lot", tags: ["nature", "smell"], },
+    { text: "Two strangers reaching for the same door handle", tags: ["people", "motion"], },
+    { text: "The blue hour — everything the same impossible shade of indigo", tags: ["color", "light"], },
+    { text: "Wind moving through tall grass in waves", tags: ["nature", "motion"], },
+    { text: "The particular silence of a library at noon", tags: ["stillness", "sound"], },
+    { text: "Condensation sliding down a cold glass in the heat", tags: ["texture", "weather"], },
+    { text: "A woman painting her nails on a park bench, completely absorbed", tags: ["people", "stillness"], },
+    { text: "The smell of hot pavement after a summer shower", tags: ["smell", "weather"], },
+    { text: "Orange peels arranged in a spiral on someone's desk", tags: ["color", "texture"], },
+    { text: "Pigeons taking off simultaneously — that wing-thunder sound", tags: ["sound", "motion", "nature"], },
+    { text: "A streetlight flickering, then steady, then flickering again", tags: ["light"], },
+    { text: "The grain of an old wooden table at the café", tags: ["texture"], },
+    { text: "Morning glories that have climbed all the way to a third-floor window", tags: ["nature", "color"], },
+    { text: "A cyclist weaving through puddles, leaving wobbling reflections", tags: ["motion", "light"], },
+    { text: "The smell of bread from a bakery vent at 5am", tags: ["smell"], },
+    { text: "Someone's umbrella turning inside out — brief comedy in the storm", tags: ["weather", "people", "motion"], },
+    { text: "Shadows of leaves dappling a white wall", tags: ["light", "nature"], },
+    { text: "The rhythm of a dripping faucet becoming almost musical", tags: ["sound", "stillness"], },
+    { text: "A child pressing their face to a shop window, breath fogging the glass", tags: ["people", "texture"], },
+    { text: "The last sliver of sun balanced on a rooftop", tags: ["light", "stillness"], },
+    { text: "Moss growing between cobblestones — soft green geometry", tags: ["nature", "color", "texture"], },
+    { text: "The hum of power lines on a quiet street", tags: ["sound"], },
+    { text: "An elderly couple walking in perfect step without speaking", tags: ["people", "motion", "stillness"], },
+    { text: "The way ink bleeds slightly on cheap paper", tags: ["texture", "color"], },
+    { text: "Petrichor rising from the garden after weeks of drought", tags: ["smell", "nature", "weather"], },
+    { text: "A cat sleeping in a perfect circle on a warm car hood", tags: ["nature", "stillness"], },
+    { text: "Traffic lights changing for empty intersections at 3am", tags: ["light", "color", "stillness"], },
+    { text: "The scrape of a chair in the flat above", tags: ["sound"], },
+    { text: "Wind carrying a plastic bag in slow spirals upward", tags: ["motion", "weather"], },
+    { text: "A row of shoes outside a door — five different sizes", tags: ["people", "stillness"], },
+    { text: "The metallic taste of the air before a thunderstorm", tags: ["smell", "weather"], },
+    { text: "Dandelion seeds catching the light as they drift", tags: ["nature", "light", "motion"], },
+    { text: "Hands pressed against a window from inside a bus", tags: ["people", "texture"], },
+    { text: "The deep blue of a bruise on a ripe plum", tags: ["color", "nature"], },
+    { text: "Rain on a tin roof — like applause", tags: ["sound", "weather"], },
+    { text: "The stillness of a pond just before a fish breaks the surface", tags: ["nature", "stillness"], },
+    { text: "Chalk outlines from children's games fading on the sidewalk", tags: ["color", "texture", "people"], },
+    { text: "Steam rising from a manhole cover — the city breathing", tags: ["motion", "weather"], },
+    { text: "The way a violin in the distance bends a note", tags: ["sound"], },
+    { text: "A spiderweb beaded with dew, each drop a tiny lens", tags: ["nature", "light", "texture"], },
+    { text: "Someone reading aloud to themselves on a bench", tags: ["people", "sound"], },
+    { text: "The burnt orange of autumn leaves against wet black bark", tags: ["color", "nature"], },
+    { text: "A door left ajar, framing a sliver of a stranger's kitchen", tags: ["people", "light"], },
+    { text: "The way sound changes when you enter a tunnel", tags: ["sound", "texture"], },
+    { text: "Snow falling so slowly it seems to hover", tags: ["weather", "motion", "stillness"], },
+  ];
+
+  const entries = [];
+  const now = Date.now();
+  const sixMonths = 180 * 24 * 60 * 60 * 1000;
+
+  for (let i = 0; i < OBSERVATIONS.length; i++) {
+    const obs = OBSERVATIONS[i];
+    // Spread across 6 months with some clustering
+    const offset = (i / OBSERVATIONS.length) * sixMonths;
+    // Add some randomness to make it feel natural
+    const jitter = (Math.sin(i * 7.3) * 0.5 + 0.5) * 3 * 24 * 60 * 60 * 1000;
+    const createdAt = new Date(now - sixMonths + offset + jitter).toISOString();
+
+    const entry = {
+      id: 9000 + i,
+      text: obs.text,
+      tags: obs.tags,
+      createdAt,
+      history: [],
+    };
+
+    // Give ~15% of entries edit history
+    if (i % 7 === 0) {
+      const editOffset = 2 * 24 * 60 * 60 * 1000 + Math.random() * 5 * 24 * 60 * 60 * 1000;
+      entry.history = [{
+        text: obs.text.split(" ").slice(0, -2).join(" ") + " differently",
+        tags: obs.tags,
+        editedAt: new Date(new Date(createdAt).getTime() + editOffset).toISOString(),
+      }];
+    }
+
+    entries.push(entry);
+  }
+
+  return entries;
+}
+
 // ─── Settings panel (iOS sheet on mobile) ────────────────────────────────────
-function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, theme, onToggleTheme, fontKey, onChangeFont }) {
+function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, onLoadSampleData, theme, onToggleTheme, fontKey, onChangeFont }) {
   const mobile = useIsMobile();
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmSample, setConfirmSample] = useState(false);
   const fileInputRef = useRef(null);
 
   const rowBtn = {
@@ -850,6 +966,38 @@ function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, theme, 
           Replay intro
         </button>
 
+        {/* Load sample data */}
+        {confirmSample ? (
+          <div style={{ padding: "16px 0", borderBottom: `1px solid ${T.border}44`, display: "flex", flexDirection: "column", gap: 10 }}>
+            <p style={{
+              margin: 0, fontFamily: T.body,
+              fontSize: 14, color: T.textMuted, fontStyle: "italic", lineHeight: 1.6,
+            }}>
+              This will add ~60 sample observations from the past 6 months. Your existing entries will be kept.
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button onClick={() => { onLoadSampleData(); onClose(); }} className="press" style={{
+                background: T.accent, border: "none",
+                borderRadius: 100, padding: "9px 20px", cursor: "pointer",
+                fontFamily: T.display, fontSize: 13, color: T.bg,
+              }}>
+                load samples
+              </button>
+              <button onClick={() => setConfirmSample(false)} className="press" style={{
+                background: "none", border: `1px solid ${T.border}`,
+                borderRadius: 100, padding: "9px 20px", cursor: "pointer",
+                fontFamily: T.display, fontSize: 13, color: T.textDim,
+              }}>
+                cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setConfirmSample(true)} style={rowBtn}>
+            Load sample data (6 months)
+          </button>
+        )}
+
         {/* Reset */}
         <div style={{ paddingTop: 16, marginTop: 8 }}>
           {confirmReset ? (
@@ -938,6 +1086,7 @@ function GraphView({ entries, customColors, onTagClick }) {
     lastPinchDist: null,
   });
   const animRef = useRef(null);
+  const [graphMode, setGraphMode] = useState("graph"); // "graph" | "timeline"
 
   const graph = useMemo(() => {
     const tagSet = new Set();
@@ -961,9 +1110,9 @@ function GraphView({ entries, customColors, onTagClick }) {
 
     entries.forEach((entry) => {
       const id = `entry:${entry.id}`;
-      const primaryTag = entry.tags[0];
-      const c = primaryTag ? getTagColor(primaryTag, customColors) : { bg: T.border, text: T.textDim, dot: T.textDim };
-      nodes.push({ id, type: "entry", label: entry.text, tags: entry.tags, color: c, radius: 5, x: 0, y: 0, vx: 0, vy: 0, pinned: false });
+      const pastel = entryPastelColor(String(entry.id));
+      const c = { bg: T.border, text: T.textDim, dot: pastel };
+      nodes.push({ id, type: "entry", label: entry.text, tags: entry.tags, createdAt: entry.createdAt, editHistory: entry.history || [], color: c, radius: 5, x: 0, y: 0, vx: 0, vy: 0, pinned: false });
 
       entry.tags.forEach((tag) => {
         edges.push({ source: id, target: tagIdMap[tag] });
@@ -1213,6 +1362,297 @@ function GraphView({ entries, customColors, onTagClick }) {
     ctx.fillText(`${entryCount} entries · ${tagCount} tags`, 16, h - 14);
   }, [graph]);
 
+  const renderTimeline = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+    const { panOffset, zoom, hover } = interRef.current;
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = T.bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.setTransform(zoom * dpr, 0, 0, zoom * dpr, panOffset.x * dpr, panOffset.y * dpr);
+
+    const entryNodes = graph.nodes.filter((n) => n.type === "entry" && n.createdAt);
+    const tagNodes = graph.nodes.filter((n) => n.type === "tag");
+    if (entryNodes.length === 0) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.font = `italic 14px 'Cormorant Garamond', serif`;
+      ctx.fillStyle = T.textDim;
+      ctx.textAlign = "center";
+      ctx.fillText("No entries with dates to show.", w / 2, h / 2);
+      return;
+    }
+
+    const timestamps = entryNodes.map((n) => new Date(n.createdAt).getTime());
+    const minTime = Math.min(...timestamps);
+    const maxTime = Math.max(...timestamps);
+    const timeSpan = maxTime - minTime || 86400000; // at least 1 day
+
+    const margin = 80;
+    const timelineY = h / 2;
+    const timelineLeft = margin;
+    const timelineRight = w - margin;
+    const timelineW = timelineRight - timelineLeft;
+
+    const timeToX = (t) => timelineLeft + ((t - minTime) / timeSpan) * timelineW;
+
+    // Draw timeline axis
+    ctx.beginPath();
+    ctx.moveTo(timelineLeft - 20, timelineY);
+    ctx.lineTo(timelineRight + 20, timelineY);
+    ctx.strokeStyle = T.border;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Date labels along timeline
+    const minDate = new Date(minTime);
+    const maxDate = new Date(maxTime);
+    const monthLabels = [];
+    const d = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+    while (d <= maxDate) {
+      const t = d.getTime();
+      if (t >= minTime - timeSpan * 0.05 && t <= maxTime + timeSpan * 0.05) {
+        monthLabels.push({ time: t, label: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()] + (d.getMonth() === 0 ? " " + d.getFullYear() : "") });
+      }
+      d.setMonth(d.getMonth() + 1);
+    }
+
+    ctx.font = `italic 10px 'Cormorant Garamond', serif`;
+    ctx.fillStyle = T.textFaint;
+    ctx.textAlign = "center";
+    monthLabels.forEach(({ time, label }) => {
+      const x = timeToX(time);
+      // tick mark
+      ctx.beginPath();
+      ctx.moveTo(x, timelineY - 4);
+      ctx.lineTo(x, timelineY + 4);
+      ctx.strokeStyle = T.textFaint;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+      ctx.fillText(label, x, timelineY + 18);
+    });
+
+    // Build a hash for y-offset to avoid overlap (deterministic from id)
+    const usedPositions = {};
+    const getYOffset = (node, isAbove) => {
+      const hash = String(node.id).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+      const base = 30 + (hash % 60);
+      return isAbove ? -base : base;
+    };
+
+    // Draw edges (entry to tag)
+    const tagIdMap = {};
+    tagNodes.forEach((tn) => { tagIdMap[tn.id] = tn; });
+
+    // Position tags above timeline near their associated entries
+    const tagPositions = {};
+    tagNodes.forEach((tn) => {
+      const connectedEntries = graph.edges
+        .filter((e) => e.target === tn.id)
+        .map((e) => entryNodes.find((n) => n.id === e.source))
+        .filter(Boolean);
+      if (connectedEntries.length === 0) return;
+      const avgTime = connectedEntries.reduce((s, n) => s + new Date(n.createdAt).getTime(), 0) / connectedEntries.length;
+      const x = timeToX(avgTime);
+      const hash = tn.label.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+      const y = timelineY - 90 - (hash % 50);
+      tagPositions[tn.id] = { x, y };
+    });
+
+    // Position entry nodes below the timeline
+    const entryPositions = {};
+    entryNodes.forEach((node) => {
+      const t = new Date(node.createdAt).getTime();
+      const x = timeToX(t);
+      const y = timelineY + getYOffset(node, false);
+      entryPositions[node.id] = { x, y };
+    });
+
+    // Draw edges
+    graph.edges.forEach(({ source, target }) => {
+      const sp = entryPositions[source];
+      const tp = tagPositions[target];
+      if (!sp || !tp) return;
+      const isHoverEdge = hover && (hover.id === source || hover.id === target);
+      ctx.beginPath();
+      ctx.moveTo(sp.x, sp.y);
+      ctx.lineTo(tp.x, tp.y);
+      ctx.strokeStyle = isHoverEdge ? T.accent + "66" : T.border + "25";
+      ctx.lineWidth = isHoverEdge ? 1 : 0.5;
+      ctx.stroke();
+    });
+
+    // Draw edit history ghost nodes (semi-transparent)
+    entryNodes.forEach((node) => {
+      if (!node.editHistory || node.editHistory.length === 0) return;
+      node.editHistory.forEach((edit) => {
+        if (!edit.editedAt) return;
+        const t = new Date(edit.editedAt).getTime();
+        if (t < minTime || t > maxTime) return;
+        const x = timeToX(t);
+        const y = timelineY + getYOffset(node, false) + 8;
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = node.color.dot.startsWith("hsl") ? node.color.dot.replace("72%)", "72%, 0.25)").replace("hsl(", "hsla(") : node.color.dot + "40";
+        ctx.fill();
+      });
+    });
+
+    // Draw entry nodes
+    entryNodes.forEach((node) => {
+      const pos = entryPositions[node.id];
+      if (!pos) return;
+      const isHovered = hover && hover.id === node.id;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, isHovered ? 7 : 5, 0, Math.PI * 2);
+      ctx.fillStyle = isHovered ? node.color.dot : node.color.dot + "AA";
+      ctx.fill();
+      if (isHovered) {
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 9, 0, Math.PI * 2);
+        ctx.strokeStyle = T.accent + "66";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    });
+
+    // Draw tag nodes (pills)
+    tagNodes.forEach((node) => {
+      const pos = tagPositions[node.id];
+      if (!pos) return;
+      ctx.font = `italic 11px 'Cormorant Garamond', serif`;
+      const labelW = ctx.measureText(node.label).width;
+      const pillW = labelW + 16;
+      const pillH = 20;
+      const pillR = pillH / 2;
+
+      ctx.beginPath();
+      ctx.roundRect(pos.x - pillW / 2, pos.y - pillH / 2, pillW, pillH, pillR);
+      ctx.fillStyle = node.color.bg;
+      ctx.fill();
+      ctx.strokeStyle = node.color.dot + "44";
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+
+      ctx.font = `italic 11px 'Cormorant Garamond', serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = node.color.text;
+      ctx.fillText(node.label, pos.x, pos.y);
+      ctx.textBaseline = "alphabetic";
+    });
+
+    // Hover tooltip for entries
+    if (hover && hover.type === "entry") {
+      const pos = entryPositions[hover.id];
+      if (pos) {
+        const text = hover.label.length > 90 ? hover.label.slice(0, 90) + "\u2026" : hover.label;
+        const maxWidth = Math.min(200, w * 0.5);
+        ctx.font = `italic 13px 'Cormorant Garamond', serif`;
+
+        const words = text.split(" ");
+        const lines = [];
+        let line = "";
+        words.forEach((word) => {
+          const test = line ? line + " " + word : word;
+          if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = word; }
+          else line = test;
+        });
+        if (line) lines.push(line);
+
+        const lineHeight = 16;
+        const pad = 10;
+        const boxW = maxWidth + pad * 2;
+        const boxH = lines.length * lineHeight + pad * 2;
+        let bx = pos.x + 12;
+        let by = pos.y - boxH - 8;
+        if (by < 10) by = pos.y + 12;
+
+        ctx.fillStyle = T.surface + "EE";
+        ctx.strokeStyle = T.border;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(bx, by, boxW, boxH, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = T.text;
+        ctx.textAlign = "left";
+        lines.forEach((l, i) => {
+          ctx.fillText(l, bx + pad, by + pad + 11 + i * lineHeight);
+        });
+      }
+    }
+
+    // Footer info
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.font = `italic 11px 'Cormorant Garamond', serif`;
+    ctx.fillStyle = T.textDim;
+    ctx.textAlign = "left";
+    const tagCount = tagNodes.length;
+    const entryCount = entryNodes.length;
+    ctx.fillText(`${entryCount} entries \u00B7 ${tagCount} tags`, 16, h - 14);
+  }, [graph]);
+
+  // Timeline hit test — uses positioned nodes
+  const timelineHitTest = useCallback((sx, sy) => {
+    const { panOffset, zoom } = interRef.current;
+    const wx = (sx - panOffset.x) / zoom;
+    const wy = (sy - panOffset.y) / zoom;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+
+    const entryNodes = graph.nodes.filter((n) => n.type === "entry" && n.createdAt);
+    const tagNodes = graph.nodes.filter((n) => n.type === "tag");
+    if (entryNodes.length === 0) return null;
+
+    const timestamps = entryNodes.map((n) => new Date(n.createdAt).getTime());
+    const minTime = Math.min(...timestamps);
+    const maxTime = Math.max(...timestamps);
+    const timeSpan = maxTime - minTime || 86400000;
+    const margin = 80;
+    const timelineY = h / 2;
+    const timelineLeft = margin;
+    const timelineW = w - 2 * margin;
+    const timeToX = (t) => timelineLeft + ((t - minTime) / timeSpan) * timelineW;
+
+    // Check entry nodes
+    for (const node of entryNodes) {
+      const t = new Date(node.createdAt).getTime();
+      const x = timeToX(t);
+      const hash = String(node.id).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+      const y = timelineY + 30 + (hash % 60);
+      const dx = wx - x, dy = wy - y;
+      if (dx * dx + dy * dy < 100) return node;
+    }
+
+    // Check tag nodes
+    for (const tn of tagNodes) {
+      const connectedEntries = graph.edges
+        .filter((e) => e.target === tn.id)
+        .map((e) => entryNodes.find((n) => n.id === e.source))
+        .filter(Boolean);
+      if (connectedEntries.length === 0) continue;
+      const avgTime = connectedEntries.reduce((s, n) => s + new Date(n.createdAt).getTime(), 0) / connectedEntries.length;
+      const x = timeToX(avgTime);
+      const hash2 = tn.label.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+      const y = timelineY - 90 - (hash2 % 50);
+      const dx = wx - x, dy = wy - y;
+      if (Math.abs(dx) < 40 && Math.abs(dy) < 14) return tn;
+    }
+    return null;
+  }, [graph]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || graph.nodes.length === 0) return;
@@ -1235,8 +1675,12 @@ function GraphView({ entries, customColors, onTagClick }) {
     if (!simRef.current) initPositions(canvas.width / dpr, canvas.height / dpr);
 
     const loop = () => {
-      tick();
-      render();
+      if (graphMode === "timeline") {
+        renderTimeline();
+      } else {
+        tick();
+        render();
+      }
       animRef.current = requestAnimationFrame(loop);
     };
     animRef.current = requestAnimationFrame(loop);
@@ -1245,7 +1689,7 @@ function GraphView({ entries, customColors, onTagClick }) {
       cancelAnimationFrame(animRef.current);
       observer.disconnect();
     };
-  }, [graph, tick, render, initPositions]);
+  }, [graph, tick, render, renderTimeline, initPositions, graphMode]);
 
   useEffect(() => {
     simRef.current = null;
@@ -1281,10 +1725,14 @@ function GraphView({ entries, customColors, onTagClick }) {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
+  const activeHitTest = useCallback((x, y) => {
+    return graphMode === "timeline" ? timelineHitTest(x, y) : hitTest(x, y);
+  }, [graphMode, hitTest, timelineHitTest]);
+
   const handleMouseDown = (e) => {
     const pos = getCanvasPos(e);
-    const node = hitTest(pos.x, pos.y);
-    if (node) {
+    const node = activeHitTest(pos.x, pos.y);
+    if (node && graphMode === "graph") {
       interRef.current.dragging = node;
       node.pinned = true;
       if (simRef.current) simRef.current.alpha = Math.max(simRef.current.alpha, 0.3);
@@ -1297,7 +1745,7 @@ function GraphView({ entries, customColors, onTagClick }) {
   const handleMouseMove = (e) => {
     const pos = getCanvasPos(e);
     const { dragging, panning, panStart, panOffset, zoom } = interRef.current;
-    if (dragging) {
+    if (dragging && graphMode === "graph") {
       dragging.x = (pos.x - panOffset.x) / zoom;
       dragging.y = (pos.y - panOffset.y) / zoom;
       dragging.vx = 0; dragging.vy = 0;
@@ -1305,7 +1753,7 @@ function GraphView({ entries, customColors, onTagClick }) {
     } else if (panning) {
       interRef.current.panOffset = { x: pos.x - panStart.x, y: pos.y - panStart.y };
     } else {
-      interRef.current.hover = hitTest(pos.x, pos.y);
+      interRef.current.hover = activeHitTest(pos.x, pos.y);
       canvasRef.current.style.cursor = interRef.current.hover ? "pointer" : "grab";
     }
   };
@@ -1345,8 +1793,8 @@ function GraphView({ entries, customColors, onTagClick }) {
     if (e.touches.length === 1) {
       const touch = e.touches[0];
       const pos = getCanvasPos(touch);
-      const node = hitTest(pos.x, pos.y);
-      if (node) {
+      const node = activeHitTest(pos.x, pos.y);
+      if (node && graphMode === "graph") {
         interRef.current.dragging = node;
         node.pinned = true;
         if (simRef.current) simRef.current.alpha = Math.max(simRef.current.alpha, 0.3);
@@ -1427,6 +1875,36 @@ function GraphView({ entries, customColors, onTagClick }) {
         onTouchEnd={handleTouchEnd}
         style={{ display: "block", cursor: "grab", touchAction: "none" }}
       />
+      {/* Mode toggle */}
+      <div style={{
+        position: "absolute", top: 14, left: 14,
+        display: "flex", gap: 4,
+      }}>
+        <button
+          onClick={() => { setGraphMode("graph"); interRef.current.panOffset = { x: 0, y: 0 }; interRef.current.zoom = 1; }}
+          style={{
+            background: graphMode === "graph" ? T.accentSoft : T.surface + "CC",
+            border: "none", borderRadius: 100,
+            padding: "5px 12px", cursor: "pointer",
+            fontFamily: T.body, fontSize: 11, fontStyle: "italic",
+            color: graphMode === "graph" ? T.accent : T.textDim,
+          }}
+        >
+          graph
+        </button>
+        <button
+          onClick={() => { setGraphMode("timeline"); interRef.current.panOffset = { x: 0, y: 0 }; interRef.current.zoom = 1; }}
+          style={{
+            background: graphMode === "timeline" ? T.accentSoft : T.surface + "CC",
+            border: "none", borderRadius: 100,
+            padding: "5px 12px", cursor: "pointer",
+            fontFamily: T.body, fontSize: 11, fontStyle: "italic",
+            color: graphMode === "timeline" ? T.accent : T.textDim,
+          }}
+        >
+          timeline
+        </button>
+      </div>
       <div style={{
         position: "absolute", top: 14, right: 14,
         fontFamily: T.body, fontSize: 11,
@@ -1434,7 +1912,7 @@ function GraphView({ entries, customColors, onTagClick }) {
         background: T.surface + "CC", padding: "6px 14px", borderRadius: 100,
         pointerEvents: "none",
       }}>
-        drag · scroll to zoom · double-click tag to filter
+        {graphMode === "graph" ? "drag · scroll to zoom · double-click tag to filter" : "scroll to zoom · pan to explore"}
       </div>
     </div>
   );
@@ -1989,6 +2467,15 @@ export default function App() {
           onReset={handleReset}
           onImport={handleImport}
           onReplayOnboarding={() => setShowOnboarding(true)}
+          onLoadSampleData={() => {
+            const sampleEntries = generateSampleData();
+            const maxSampleId = Math.max(...sampleEntries.map((e) => e.id));
+            const merged = [...sampleEntries, ...entries];
+            setEntries(merged);
+            setVisibleIds(new Set(merged.map((e) => e.id)));
+            if (maxSampleId >= nextId.current) nextId.current = maxSampleId + 1;
+            save(merged);
+          }}
           theme={theme}
           onToggleTheme={toggleTheme}
           fontKey={fontKey}
