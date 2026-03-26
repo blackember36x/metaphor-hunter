@@ -1,6 +1,47 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 
-// ─── Mobile detection ─────────────────────────────────────────────────────────
+// ─── Design tokens ───────────────────────────────────────────────────────────
+const SHARED = {
+  serif:     "'Cormorant Garamond', Georgia, serif",
+  display:   "'DM Serif Display', Georgia, serif",
+  mono:      "'JetBrains Mono', monospace",
+  ease:      "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+};
+
+const THEMES = {
+  dark: {
+    ...SHARED,
+    bg:        "#141210",
+    surface:   "#1E1B18",
+    border:    "#2E2924",
+    text:      "#EAE4DC",
+    textMuted: "#A89E92",
+    textDim:   "#9C8B78",
+    textFaint: "#5C4F42",
+    accent:    "#C4A070",
+    accentSoft:"#C4A07044",
+    danger:    "#C27058",
+  },
+  light: {
+    ...SHARED,
+    bg:        "#F4EDE4",
+    surface:   "#EDE5DA",
+    border:    "#D4C8B8",
+    text:      "#2A2420",
+    textMuted: "#6E6258",
+    textDim:   "#8E8072",
+    textFaint: "#B8AA9A",
+    accent:    "#9E7A4E",
+    accentSoft:"#9E7A4E33",
+    danger:    "#B85A42",
+  },
+};
+
+const THEME_KEY = "mh_theme_v1";
+// Backwards-compatible global T — will be overridden per render
+let T = THEMES.dark;
+
+// ─── Mobile detection ────────────────────────────────────────────────────────
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth <= 600);
   useEffect(() => {
@@ -12,7 +53,7 @@ function useIsMobile() {
   return mobile;
 }
 
-// ─── Storage helpers ──────────────────────────────────────────────────────────
+// ─── Storage helpers ─────────────────────────────────────────────────────────
 const STORAGE_KEY = "mh_entries_v1";
 const COUNTER_KEY = "mh_next_id_v1";
 const TAG_COLORS_KEY = "mh_tag_colors_v1";
@@ -53,7 +94,7 @@ function persistTagColors(colors) {
   localStorage.setItem(TAG_COLORS_KEY, JSON.stringify(colors));
 }
 
-// ─── Data management helpers ─────────────────────────────────────────────────
+// ─── Data management ─────────────────────────────────────────────────────────
 function exportData() {
   const data = {
     entries: localStorage.getItem(STORAGE_KEY),
@@ -66,7 +107,7 @@ function exportData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `metaphor-hunter-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `lucid-backup-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -79,7 +120,7 @@ function resetAllData() {
   localStorage.removeItem("mh_first_use_v1");
 }
 
-// ─── Onboarding / Progress constants ─────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────
 const ONBOARDING_KEY = "mh_onboarding_done_v1";
 const FIRST_USE_KEY = "mh_first_use_v1";
 
@@ -93,7 +134,7 @@ const MILESTONES = [
 
 const ONBOARDING_SLIDES = [
   {
-    title: "Welcome to Metaphor Hunter",
+    title: "Welcome to Lucid",
     body: "This is a tool for learning to notice — really notice — the world around you.",
     accent: "The way light hits a building. A stranger's gesture. The sound of rain on different surfaces.",
   },
@@ -103,7 +144,7 @@ const ONBOARDING_SLIDES = [
     accent: "Whether you're a writer, an artist, a musician, or simply someone who wants to feel more alive in their daily life — it all starts with what you choose to pay attention to.",
   },
   {
-    title: "Step 1: Notice",
+    title: "Glimpse",
     body: "When something catches your attention — a sight, a sound, a thought — capture it here in your own words. Don't overthink it. Just describe what you noticed and why it stood out.",
     accent: "There are no right answers. Only your attention.",
   },
@@ -124,16 +165,16 @@ const ONBOARDING_SLIDES = [
   },
 ];
 
-// ─── Tag color palette ────────────────────────────────────────────────────────
+// ─── Tag color palette ───────────────────────────────────────────────────────
 const TAG_PALETTE = {
-  nature:   { bg: "#1E3A2A", text: "#7BC99A", dot: "#4CAF7D" },
-  people:   { bg: "#2A1E3A", text: "#B99AE0", dot: "#9B59B6" },
-  space:    { bg: "#1E2A3A", text: "#7EB5E0", dot: "#3A9BD5" },
-  emotion:  { bg: "#3A1E1E", text: "#E07E7E", dot: "#D45555" },
-  time:     { bg: "#3A2E1E", text: "#E0B97E", dot: "#D49A35" },
-  language: { bg: "#1E3A35", text: "#7ED4C8", dot: "#35C4B8" },
-  city:     { bg: "#2A2A1E", text: "#CACF7A", dot: "#B0B835" },
-  body:     { bg: "#3A1E2A", text: "#E07EAF", dot: "#D4558A" },
+  nature:   { bg: "#1C2A22", text: "#8FBFA0", dot: "#6EA88A" },
+  people:   { bg: "#261E30", text: "#B09CC8", dot: "#9484AE" },
+  space:    { bg: "#1C2430", text: "#8AABC4", dot: "#7093AD" },
+  emotion:  { bg: "#2E1E1E", text: "#CDA090", dot: "#B48878" },
+  time:     { bg: "#2C2518", text: "#C8B08A", dot: "#B09870" },
+  language: { bg: "#1C2A28", text: "#8AC0B8", dot: "#6EA8A0" },
+  city:     { bg: "#28281C", text: "#B8BC88", dot: "#A0A470" },
+  body:     { bg: "#2E1E26", text: "#C898AE", dot: "#B07E96" },
 };
 const PALETTE_KEYS = Object.keys(TAG_PALETTE);
 
@@ -149,7 +190,7 @@ const getTagColor = (tag, customColors = {}) => {
   return getDefaultTagColor(tag);
 };
 
-// ─── Timestamp helpers ────────────────────────────────────────────────────────
+// ─── Timestamp helpers ───────────────────────────────────────────────────────
 function formatRelative(iso) {
   const d = new Date(iso);
   const diffMs = Date.now() - d;
@@ -158,7 +199,7 @@ function formatRelative(iso) {
   if (diffMins < 1)   return "just now";
   if (diffMins < 60)  return `${diffMins}m ago`;
   if (diffDays === 0) return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  if (diffDays === 1) return "Yesterday";
+  if (diffDays === 1) return "yesterday";
   if (diffDays < 7)   return `${diffDays}d ago`;
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
@@ -170,7 +211,7 @@ function formatFull(iso) {
   });
 }
 
-// ─── TagColorPicker ───────────────────────────────────────────────────────────
+// ─── TagColorPicker ──────────────────────────────────────────────────────────
 function TagColorPicker({ tag, customColors, onSelect, onClose }) {
   const pickerRef = useRef(null);
 
@@ -185,15 +226,16 @@ function TagColorPicker({ tag, customColors, onSelect, onClose }) {
   const isCustom = !!customColors[tag];
 
   return (
-    <div ref={pickerRef} style={{
-      position: "absolute", top: "100%", left: 0, marginTop: 6, zIndex: 20,
-      background: "#1C1915", border: "1px solid #2E2A24", borderRadius: 10,
-      padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8,
-      boxShadow: "0 8px 24px #00000066", minWidth: 180,
+    <div ref={pickerRef} className="glass" style={{
+      position: "absolute", top: "100%", left: 0, marginTop: 8, zIndex: 20,
+      background: T.surface + "F0", border: `1px solid ${T.border}`,
+      borderRadius: 16, padding: "14px 16px",
+      display: "flex", flexDirection: "column", gap: 10,
+      boxShadow: "0 12px 40px #00000044", minWidth: 180,
     }}>
       <span style={{
-        fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-        color: "#5C5448", letterSpacing: "0.08em", textTransform: "uppercase",
+        fontFamily: T.serif, fontSize: 13,
+        color: T.textMuted, fontStyle: "italic",
       }}>
         color for "{tag}"
       </span>
@@ -207,10 +249,10 @@ function TagColorPicker({ tag, customColors, onSelect, onClose }) {
               onClick={() => onSelect(tag, c)}
               title={key}
               style={{
-                width: 26, height: 26, borderRadius: "50%",
+                width: 28, height: 28, borderRadius: "50%",
                 background: c.bg, border: `2px solid ${selected ? c.dot : "transparent"}`,
                 cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                transition: "border-color 0.15s",
+                transition: `border-color 0.2s ${T.ease}`,
               }}
             >
               <span style={{ width: 10, height: 10, borderRadius: "50%", background: c.dot }} />
@@ -222,10 +264,10 @@ function TagColorPicker({ tag, customColors, onSelect, onClose }) {
         <button
           onClick={() => onSelect(tag, null)}
           style={{
-            background: "none", border: "1px solid #2E2A24", borderRadius: 6,
-            padding: "4px 10px", cursor: "pointer",
-            fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-            color: "#5C5448", letterSpacing: "0.06em",
+            background: "none", border: `1px solid ${T.border}`, borderRadius: 8,
+            padding: "5px 12px", cursor: "pointer",
+            fontFamily: T.serif, fontSize: 12,
+            color: T.textDim, fontStyle: "italic",
           }}
         >
           reset to default
@@ -235,33 +277,33 @@ function TagColorPicker({ tag, customColors, onSelect, onClose }) {
   );
 }
 
-// ─── TagPill ──────────────────────────────────────────────────────────────────
-function TagPill({ tag, onClick, removable, customColors, mobile: mobileProp }) {
+// ─── TagAnnotation (replaces TagPill — subtle colored text, not pills) ───────
+function TagAnnotation({ tag, onClick, removable, customColors, mobile: mobileProp }) {
   const mobileHook = useIsMobile();
   const isMobile = mobileProp !== undefined ? mobileProp : mobileHook;
   const c = getTagColor(tag, customColors);
   return (
     <span
       onClick={onClick}
+      className="filter-btn"
       title={removable ? "Remove" : `Filter by "${tag}"`}
       style={{
-        display: "inline-flex", alignItems: "center", gap: 5,
-        padding: isMobile ? "5px 12px" : "3px 10px", borderRadius: 20,
-        background: c.bg, color: c.text,
-        fontSize: 11, fontFamily: "'JetBrains Mono', monospace",
-        letterSpacing: "0.06em", border: `1px solid ${c.dot}22`,
-        cursor: onClick ? "pointer" : "default", transition: "opacity 0.15s",
+        display: "inline-flex", alignItems: "center", gap: 4,
+        padding: isMobile ? "3px 0" : "2px 0",
+        color: c.text + "CC",
+        fontSize: 12, fontFamily: T.serif,
+        fontStyle: "italic", letterSpacing: "0.02em",
+        cursor: onClick ? "pointer" : "default",
         ...(isMobile ? { minHeight: 28 } : {}),
       }}
     >
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: c.dot, flexShrink: 0 }} />
       {tag}
-      {removable && <span style={{ marginLeft: 2, opacity: 0.6, fontSize: 13, lineHeight: 1 }}>×</span>}
+      {removable && <span style={{ opacity: 0.4, fontSize: 11, marginLeft: 2 }}>×</span>}
     </span>
   );
 }
 
-// ─── Highlighted text (for search) ────────────────────────────────────────────
+// ─── Highlighted text (for search) ───────────────────────────────────────────
 function HighlightedText({ text, query }) {
   if (!query || !query.trim()) return <>{text}</>;
   const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
@@ -271,8 +313,8 @@ function HighlightedText({ text, query }) {
       {parts.map((part, i) =>
         regex.test(part) ? (
           <mark key={i} style={{
-            background: "#C9A84C44", color: "#EDE5D5",
-            borderRadius: 2, padding: "0 1px",
+            background: T.accentSoft, color: T.text,
+            borderRadius: 2, padding: "0 2px",
           }}>{part}</mark>
         ) : (
           <span key={i}>{part}</span>
@@ -282,7 +324,7 @@ function HighlightedText({ text, query }) {
   );
 }
 
-// ─── EntryCard ────────────────────────────────────────────────────────────────
+// ─── EntryCard ───────────────────────────────────────────────────────────────
 function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, searchQuery, visible, customColors }) {
   const mobile = useIsMobile();
   const [showFull, setShowFull] = useState(false);
@@ -338,22 +380,23 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
     if (e.key === "Escape") cancelEdit();
   };
 
-  const iconBtn = {
+  const subtleBtn = {
     background: "none", border: "none", cursor: "pointer",
     padding: mobile ? "8px 10px" : "4px 6px",
-    borderRadius: mobile ? 6 : 4, transition: "background 0.15s",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: mobile ? 14 : 11,
+    borderRadius: 6,
+    fontFamily: T.serif, fontStyle: "italic",
+    fontSize: mobile ? 13 : 12,
+    transition: `opacity 0.2s ${T.ease}`,
     ...(mobile ? { minWidth: 36, minHeight: 36, display: "inline-flex", alignItems: "center", justifyContent: "center" } : {}),
   };
 
   if (editing) {
     return (
       <div style={{
-        background: "#1C1915", border: "1px solid #C9A84C44",
-        borderRadius: 12, padding: "22px 26px",
+        paddingBottom: 28, marginBottom: 8,
+        borderBottom: `1px solid ${T.border}44`,
         display: "flex", flexDirection: "column", gap: 12,
-        boxShadow: "0 0 0 4px #C9A84C08",
+        animation: `gentleIn 0.3s ${T.ease}`,
       }}>
         <textarea
           ref={editRef}
@@ -363,18 +406,17 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
           rows={4}
           style={{
             width: "100%", background: "transparent", border: "none", resize: "none",
-            fontFamily: "'Cormorant Garamond', serif",
-            fontSize: 18, lineHeight: 1.65, color: "#EDE5D5",
+            fontFamily: T.serif,
+            fontSize: 19, lineHeight: 1.7, color: T.text,
             fontWeight: 300, fontStyle: "italic", letterSpacing: "0.01em",
             outline: "none",
           }}
         />
         <div style={{
-          borderTop: "1px solid #2E2A24", paddingTop: 10,
-          display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6,
+          display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8,
         }}>
           {editTags.map((t) => (
-            <TagPill key={t} tag={t} removable customColors={customColors} onClick={() => setEditTags((p) => p.filter((x) => x !== t))} />
+            <TagAnnotation key={t} tag={t} removable customColors={customColors} onClick={() => setEditTags((p) => p.filter((x) => x !== t))} />
           ))}
           <input
             value={editTagInput}
@@ -383,19 +425,20 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
             placeholder={editTags.length === 0 ? "add tags…" : ""}
             style={{
               background: "transparent", border: "none", outline: "none",
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 11, color: "#9A8E7A", letterSpacing: "0.06em",
+              fontFamily: T.serif, fontStyle: "italic",
+              fontSize: 13, color: T.textMuted,
               width: 130, flexShrink: 0,
             }}
           />
-          <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
-            <button onClick={cancelEdit} style={{ ...iconBtn, color: "#5C5448" }}>cancel</button>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+            <button onClick={cancelEdit} style={{ ...subtleBtn, color: T.textDim }}>cancel</button>
             <button
               onClick={saveEdit}
+              className="press"
               style={{
-                background: "#C9A84C", border: "none", borderRadius: 6,
-                padding: "6px 14px", fontFamily: "'DM Serif Display', serif",
-                fontSize: 13, color: "#111009", cursor: "pointer",
+                background: T.accent, border: "none", borderRadius: 100,
+                padding: "7px 20px", fontFamily: T.display,
+                fontSize: 13, color: T.bg, cursor: "pointer",
               }}
             >
               save
@@ -409,118 +452,106 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
   return (
     <div style={{
       opacity: visible ? 1 : 0,
-      transform: visible ? "translateY(0)" : "translateY(16px)",
-      transition: "opacity 0.4s ease, transform 0.4s ease",
-      background: "#1C1915", border: "1px solid #2E2A24",
-      borderRadius: 12, padding: "22px 26px",
-      display: "flex", flexDirection: "column", gap: 14,
-      position: "relative", overflow: "hidden",
+      transform: visible ? "translateY(0)" : "translateY(8px)",
+      transition: `opacity 0.4s ${T.ease}, transform 0.4s ${T.ease}`,
+      paddingBottom: 24, marginBottom: 8,
+      borderBottom: `1px solid ${T.border}44`,
+      display: "flex", flexDirection: "column", gap: 10,
     }}>
-      {/* Accent bar */}
-      <div style={{
-        position: "absolute", left: 0, top: "20%", bottom: "20%",
-        width: 2, borderRadius: 2,
-        background: "linear-gradient(to bottom, transparent, #C9A84C55, transparent)",
-      }} />
-
+      {/* Observation text */}
       <p style={{
         margin: 0,
-        fontFamily: "'Cormorant Garamond', serif",
-        fontSize: 18, lineHeight: 1.65,
-        color: "#EDE5D5", fontWeight: 300,
+        fontFamily: T.serif,
+        fontSize: 19, lineHeight: 1.75,
+        color: T.text, fontWeight: 300,
         fontStyle: "italic", letterSpacing: "0.01em",
       }}>
         &ldquo;<HighlightedText text={entry.text} query={searchQuery} />&rdquo;
       </p>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 8 }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-          {entry.tags.length > 0
-            ? entry.tags.map((t) => <TagPill key={t} tag={t} customColors={customColors} onClick={() => onTagClick(t)} />)
-            : <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#3A3428" }}>untagged</span>
-          }
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* Edit / Delete buttons */}
-          <button onClick={startEdit} title="Edit" style={{ ...iconBtn, color: "#4A4438" }}>✎</button>
-          {confirmDelete ? (
-            <span style={{ display: "flex", gap: 4, alignItems: "center" }}>
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: "#D45555" }}>delete?</span>
-              <button onClick={() => onDelete(entry.id)} style={{ ...iconBtn, color: "#D45555", fontSize: 10 }}>yes</button>
-              <button onClick={() => setConfirmDelete(false)} style={{ ...iconBtn, color: "#5C5448", fontSize: 10 }}>no</button>
-            </span>
-          ) : (
-            <button onClick={() => setConfirmDelete(true)} title="Delete" style={{ ...iconBtn, color: "#4A4438" }}>×</button>
-          )}
-          {/* Timestamp */}
-          <span
-            onClick={() => setShowFull((p) => !p)}
-            title={formatFull(entry.createdAt)}
-            style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-              color: "#4A4438", letterSpacing: "0.04em",
-              cursor: "pointer", whiteSpace: "nowrap", userSelect: "none",
-            }}
-          >
-            {showFull ? formatFull(entry.createdAt) : formatRelative(entry.createdAt)}
+      {/* Tags as subtle annotations */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
+        {entry.tags.length > 0
+          ? entry.tags.map((t) => <TagAnnotation key={t} tag={t} customColors={customColors} onClick={() => onTagClick(t)} />)
+          : null
+        }
+      </div>
+
+      {/* Meta row: timestamp + actions */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <span
+          onClick={() => setShowFull((p) => !p)}
+          title={formatFull(entry.createdAt)}
+          style={{
+            fontFamily: T.serif, fontSize: 13,
+            color: T.textDim, fontStyle: "italic",
+            cursor: "pointer", whiteSpace: "nowrap", userSelect: "none",
+          }}
+        >
+          {showFull ? formatFull(entry.createdAt) : formatRelative(entry.createdAt)}
+        </span>
+
+        <span style={{ flex: 1 }} />
+
+        <button onClick={startEdit} title="Edit" style={{ ...subtleBtn, color: T.textDim }}>edit</button>
+        {confirmDelete ? (
+          <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <button onClick={() => onDelete(entry.id)} style={{ ...subtleBtn, color: T.danger }}>yes</button>
+            <button onClick={() => setConfirmDelete(false)} style={{ ...subtleBtn, color: T.textDim }}>no</button>
           </span>
-        </div>
+        ) : (
+          <button onClick={() => setConfirmDelete(true)} title="Delete" style={{ ...subtleBtn, color: T.textDim }}>remove</button>
+        )}
       </div>
 
       {/* Edited indicator */}
       {history.length > 0 && (
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span
-            onClick={() => setShowHistory((p) => !p)}
-            style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-              color: "#5C5448", letterSpacing: "0.04em",
-              cursor: "pointer", userSelect: "none",
-            }}
-          >
-            edited {formatRelative(history[0].editedAt)} · {history.length} revision{history.length !== 1 ? "s" : ""} {showHistory ? "▲" : "▼"}
-          </span>
-        </div>
+        <span
+          onClick={() => setShowHistory((p) => !p)}
+          style={{
+            fontFamily: T.serif, fontSize: 12,
+            color: T.textDim, fontStyle: "italic",
+            cursor: "pointer", userSelect: "none",
+          }}
+        >
+          edited {formatRelative(history[0].editedAt)} · {history.length} revision{history.length !== 1 ? "s" : ""} {showHistory ? "▲" : "▼"}
+        </span>
       )}
 
       {/* Edit history */}
       {showHistory && history.map((h, i) => (
         <div key={i} style={{
-          background: "#15130F", border: "1px solid #2E2A24",
-          borderRadius: 8, padding: "14px 18px",
-          display: "flex", flexDirection: "column", gap: 8,
+          paddingLeft: 20,
+          borderLeft: `2px solid ${T.border}`,
+          display: "flex", flexDirection: "column", gap: 6,
+          marginTop: 4,
         }}>
           <p style={{
-            margin: 0, fontFamily: "'Cormorant Garamond', serif",
-            fontSize: 15, lineHeight: 1.55, color: "#7A6A52",
+            margin: 0, fontFamily: T.serif,
+            fontSize: 15, lineHeight: 1.6, color: T.textDim,
             fontStyle: "italic", textDecoration: "line-through",
-            textDecorationColor: "#3A342844",
+            textDecorationColor: T.textFaint,
           }}>
             &ldquo;{h.text}&rdquo;
           </p>
           {h.tags && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 4, opacity: 0.5 }}>
-              {h.tags.map((t) => <TagPill key={t} tag={t} customColors={customColors} />)}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, opacity: 0.5 }}>
+              {h.tags.map((t) => <TagAnnotation key={t} tag={t} customColors={customColors} />)}
             </div>
           )}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
-              color: "#4A4438", letterSpacing: "0.04em",
-            }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontFamily: T.serif, fontSize: 11, color: T.textDim, fontStyle: "italic" }}>
               {formatFull(h.editedAt)}
             </span>
             <button
               onClick={() => onEdit(entry.id, h.text, h.tags || entry.tags, true)}
-              title="Revert to this version"
-              style={{ ...iconBtn, color: "#C9A84C", fontSize: 10 }}
+              style={{ ...subtleBtn, color: T.accent, fontSize: 11 }}
             >
               revert
             </button>
             <button
               onClick={() => onDeleteRevision(entry.id, i)}
-              title="Discard this old version"
-              style={{ ...iconBtn, color: "#D45555", fontSize: 10 }}
+              style={{ ...subtleBtn, color: T.danger, fontSize: 11 }}
             >
               discard
             </button>
@@ -531,26 +562,26 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
   );
 }
 
-// ─── Save status badge ────────────────────────────────────────────────────────
+// ─── Save status ─────────────────────────────────────────────────────────────
 function SaveBadge({ status }) {
   const styles = {
-    saving: { text: "saving…",    color: "#7A6A52" },
-    saved:  { text: "✓ saved",    color: "#4CAF7D" },
-    error:  { text: "⚠ not saved",color: "#D45555" },
+    saving: { text: "saving…",     color: T.textDim },
+    saved:  { text: "saved",       color: T.textDim },
+    error:  { text: "not saved",   color: T.danger },
   };
   if (!styles[status]) return null;
   return (
     <span style={{
-      fontFamily: "'JetBrains Mono', monospace",
-      fontSize: 10, color: styles[status].color,
-      letterSpacing: "0.08em", transition: "opacity 0.3s",
+      fontFamily: T.serif, fontStyle: "italic",
+      fontSize: 12, color: styles[status].color,
+      transition: `opacity 0.3s ${T.ease}`,
     }}>
       {styles[status].text}
     </span>
   );
 }
 
-// ─── Onboarding ───────────────────────────────────────────────────────────────
+// ─── Onboarding ──────────────────────────────────────────────────────────────
 function Onboarding({ onComplete }) {
   const [slide, setSlide] = useState(0);
   const mobile = useIsMobile();
@@ -565,57 +596,58 @@ function Onboarding({ onComplete }) {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 100,
-      background: "#111009", display: "flex",
+      background: T.bg, display: "flex",
       flexDirection: "column", alignItems: "center", justifyContent: "center",
-      padding: mobile ? "40px 24px" : "60px 40px",
+      padding: mobile ? "40px 28px" : "60px 40px",
     }}>
-      {/* Skip button */}
+      {/* Skip */}
       <button
         onClick={complete}
         style={{
-          position: "absolute", top: mobile ? 16 : 24, right: mobile ? 16 : 24,
+          position: "absolute", top: mobile ? 20 : 28, right: mobile ? 20 : 28,
           background: "none", border: "none", cursor: "pointer",
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-          color: "#4A4438", letterSpacing: "0.08em",
+          fontFamily: T.serif, fontSize: 14,
+          color: T.textDim, fontStyle: "italic",
         }}
       >
         skip
       </button>
 
-      {/* Slide content */}
-      <div style={{ maxWidth: 440, textAlign: "center" }}>
+      {/* Content */}
+      <div style={{ maxWidth: 420, textAlign: "center" }}>
         <h2 style={{
-          fontFamily: "'DM Serif Display', serif",
-          fontSize: mobile ? 24 : 28, color: "#EDE5D5",
-          fontWeight: 400, margin: "0 0 20px",
-          letterSpacing: "-0.01em",
+          fontFamily: T.display,
+          fontSize: mobile ? 26 : 32, color: T.text,
+          fontWeight: 400, margin: "0 0 24px",
+          letterSpacing: "-0.02em",
         }}>
           {current.title}
         </h2>
 
         <p style={{
-          fontFamily: "'Cormorant Garamond', serif",
-          fontSize: mobile ? 16 : 18, lineHeight: 1.7,
-          color: "#9A8E7A", margin: "0 0 24px",
+          fontFamily: T.serif,
+          fontSize: mobile ? 17 : 19, lineHeight: 1.75,
+          color: T.textMuted, margin: "0 0 20px",
         }}>
           {current.body}
         </p>
 
         {current.accent && (
           <p style={{
-            fontFamily: "'Cormorant Garamond', serif",
+            fontFamily: T.serif,
             fontSize: mobile ? 15 : 16, fontStyle: "italic",
-            color: "#C9A84C", lineHeight: 1.6, margin: 0,
+            color: T.accent, lineHeight: 1.7, margin: 0,
+            opacity: 0.85,
           }}>
             {current.accent}
           </p>
         )}
       </div>
 
-      {/* Dots + navigation */}
+      {/* Navigation */}
       <div style={{
-        position: "absolute", bottom: mobile ? 40 : 60,
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 24,
+        position: "absolute", bottom: mobile ? 48 : 64,
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 28,
       }}>
         {/* Dots */}
         <div style={{ display: "flex", gap: 8 }}>
@@ -624,25 +656,24 @@ function Onboarding({ onComplete }) {
               key={i}
               onClick={() => setSlide(i)}
               style={{
-                width: i === slide ? 20 : 6, height: 6,
+                width: i === slide ? 20 : 5, height: 5,
                 borderRadius: 3, cursor: "pointer",
-                background: i === slide ? "#C9A84C" : "#2E2A24",
-                transition: "all 0.3s",
+                background: i === slide ? T.accent : T.border,
+                transition: `all 0.3s ${T.ease}`,
               }}
             />
           ))}
         </div>
 
-        {/* Buttons */}
-        <div style={{ display: "flex", gap: 12 }}>
+        <div style={{ display: "flex", gap: 14 }}>
           {slide > 0 && (
             <button
               onClick={() => setSlide((s) => s - 1)}
+              className="press"
               style={{
-                background: "none", border: "1px solid #2E2A24",
-                borderRadius: 8, padding: "10px 24px", cursor: "pointer",
-                fontFamily: "'DM Serif Display', serif",
-                fontSize: 14, color: "#5C5448",
+                background: "none", border: `1px solid ${T.border}`,
+                borderRadius: 100, padding: "11px 28px", cursor: "pointer",
+                fontFamily: T.display, fontSize: 14, color: T.textDim,
               }}
             >
               back
@@ -650,13 +681,13 @@ function Onboarding({ onComplete }) {
           )}
           <button
             onClick={isLast ? complete : () => setSlide((s) => s + 1)}
+            className="press"
             style={{
-              background: isLast ? "#C9A84C" : "none",
-              border: isLast ? "none" : "1px solid #C9A84C66",
-              borderRadius: 8, padding: "10px 28px", cursor: "pointer",
-              fontFamily: "'DM Serif Display', serif",
-              fontSize: 14,
-              color: isLast ? "#111009" : "#C9A84C",
+              background: isLast ? T.accent : "none",
+              border: isLast ? "none" : `1px solid ${T.accentSoft}`,
+              borderRadius: 100, padding: "11px 32px", cursor: "pointer",
+              fontFamily: T.display, fontSize: 14,
+              color: isLast ? T.bg : T.accent,
             }}
           >
             {isLast ? "begin" : "next"}
@@ -667,56 +698,69 @@ function Onboarding({ onComplete }) {
   );
 }
 
-// ─── Settings panel ───────────────────────────────────────────────────────────
-function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding }) {
+// ─── Settings panel (iOS sheet on mobile) ────────────────────────────────────
+function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, theme, onToggleTheme }) {
   const mobile = useIsMobile();
   const [confirmReset, setConfirmReset] = useState(false);
   const fileInputRef = useRef(null);
 
+  const rowBtn = {
+    background: "none", border: "none", width: "100%",
+    padding: "16px 0", cursor: "pointer", textAlign: "left",
+    fontFamily: T.serif, fontSize: 15, color: T.textMuted,
+    fontStyle: "italic", borderBottom: `1px solid ${T.border}44`,
+    transition: `color 0.2s ${T.ease}`,
+  };
+
   return (
-    <div style={{
+    <div className="glass" style={{
       position: "fixed", inset: 0, zIndex: 90,
-      background: "#111009EE",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: mobile ? 20 : 40,
+      background: "#1A1816BB",
+      display: "flex", alignItems: mobile ? "flex-end" : "center", justifyContent: "center",
+      padding: mobile ? 0 : 40,
     }}>
       <div style={{
-        background: "#1C1915", border: "1px solid #2E2A24",
-        borderRadius: 14, padding: mobile ? "24px 20px" : "32px 28px",
+        background: T.surface, border: `1px solid ${T.border}`,
+        borderRadius: mobile ? "24px 24px 0 0" : 20,
+        padding: mobile ? "8px 24px 40px" : "8px 32px 32px",
         maxWidth: 400, width: "100%",
-        display: "flex", flexDirection: "column", gap: 16,
+        display: "flex", flexDirection: "column",
+        boxShadow: "0 -8px 40px #00000030",
+        animation: `sheetUp 0.3s ${T.ease}`,
       }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        {/* Handle bar (mobile) */}
+        {mobile && (
+          <div style={{ display: "flex", justifyContent: "center", padding: "8px 0 16px" }}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: T.border }} />
+          </div>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
           <h2 style={{
-            margin: 0, fontFamily: "'DM Serif Display', serif",
-            fontSize: 18, color: "#EDE5D5", fontWeight: 400,
+            margin: 0, fontFamily: T.display,
+            fontSize: 20, color: T.text, fontWeight: 400,
           }}>
             Settings
           </h2>
-          <button onClick={onClose} style={{
-            background: "none", border: "none", cursor: "pointer",
-            fontFamily: "'JetBrains Mono', monospace", fontSize: 16, color: "#5C5448",
-          }}>×</button>
+          {!mobile && (
+            <button onClick={onClose} style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontFamily: T.serif, fontSize: 18, color: T.textDim,
+            }}>×</button>
+          )}
         </div>
 
-        {/* Export */}
-        <button onClick={() => { exportData(); }} style={{
-          background: "#111009", border: "1px solid #2E2A24",
-          borderRadius: 8, padding: "12px 16px", cursor: "pointer",
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-          color: "#9A8E7A", textAlign: "left", letterSpacing: "0.04em",
-        }}>
-          ↓ Export data backup
+        {/* Theme toggle */}
+        <button onClick={onToggleTheme} style={rowBtn}>
+          {theme === "dark" ? "Light mode" : "Dark mode"}
         </button>
 
-        {/* Import */}
-        <button onClick={() => fileInputRef.current?.click()} style={{
-          background: "#111009", border: "1px solid #2E2A24",
-          borderRadius: 8, padding: "12px 16px", cursor: "pointer",
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-          color: "#9A8E7A", textAlign: "left", letterSpacing: "0.04em",
-        }}>
-          ↑ Import data from backup
+        <button onClick={() => { exportData(); }} style={rowBtn}>
+          Export backup
+        </button>
+
+        <button onClick={() => fileInputRef.current?.click()} style={rowBtn}>
+          Import from backup
         </button>
         <input
           ref={fileInputRef}
@@ -741,40 +785,32 @@ function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding }) {
           }}
         />
 
-        {/* Replay onboarding */}
-        <button onClick={() => { onReplayOnboarding(); onClose(); }} style={{
-          background: "#111009", border: "1px solid #2E2A24",
-          borderRadius: 8, padding: "12px 16px", cursor: "pointer",
-          fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-          color: "#9A8E7A", textAlign: "left", letterSpacing: "0.04em",
-        }}>
-          ? Replay intro
+        <button onClick={() => { onReplayOnboarding(); onClose(); }} style={rowBtn}>
+          Replay intro
         </button>
 
         {/* Reset */}
-        <div style={{ borderTop: "1px solid #2E2A24", paddingTop: 16 }}>
+        <div style={{ paddingTop: 16, marginTop: 8 }}>
           {confirmReset ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <p style={{
-                margin: 0, fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 11, color: "#D45555", letterSpacing: "0.04em",
+                margin: 0, fontFamily: T.serif,
+                fontSize: 14, color: T.danger, fontStyle: "italic", lineHeight: 1.6,
               }}>
-                This will permanently delete all observations, tags, and settings. Export a backup first if you want to keep your data.
+                This will permanently delete all observations, tags, and settings.
               </p>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={() => { onReset(); onClose(); }} style={{
-                  background: "#D45555", border: "none",
-                  borderRadius: 6, padding: "8px 16px", cursor: "pointer",
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-                  color: "#111009",
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={() => { onReset(); onClose(); }} className="press" style={{
+                  background: T.danger, border: "none",
+                  borderRadius: 100, padding: "9px 20px", cursor: "pointer",
+                  fontFamily: T.display, fontSize: 13, color: T.bg,
                 }}>
-                  yes, delete everything
+                  delete everything
                 </button>
-                <button onClick={() => setConfirmReset(false)} style={{
-                  background: "none", border: "1px solid #2E2A24",
-                  borderRadius: 6, padding: "8px 16px", cursor: "pointer",
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-                  color: "#5C5448",
+                <button onClick={() => setConfirmReset(false)} className="press" style={{
+                  background: "none", border: `1px solid ${T.border}`,
+                  borderRadius: 100, padding: "9px 20px", cursor: "pointer",
+                  fontFamily: T.display, fontSize: 13, color: T.textDim,
                 }}>
                   cancel
                 </button>
@@ -782,39 +818,46 @@ function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding }) {
             </div>
           ) : (
             <button onClick={() => setConfirmReset(true)} style={{
-              background: "none", border: "1px solid #3A1E1E",
-              borderRadius: 8, padding: "12px 16px", cursor: "pointer",
-              fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-              color: "#D45555", textAlign: "left", letterSpacing: "0.04em",
-              width: "100%",
+              ...rowBtn, color: T.danger, borderBottom: "none",
             }}>
-              ✕ Reset all data
+              Reset all data
             </button>
           )}
         </div>
+
+        {/* Close button for mobile */}
+        {mobile && (
+          <button onClick={onClose} className="press" style={{
+            marginTop: 12, background: "none", border: `1px solid ${T.border}`,
+            borderRadius: 100, padding: "12px 0", cursor: "pointer",
+            fontFamily: T.display, fontSize: 14, color: T.textDim,
+            width: "100%",
+          }}>
+            close
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-// ─── Milestone banner ─────────────────────────────────────────────────────────
+// ─── Milestone banner ────────────────────────────────────────────────────────
 function MilestoneBanner({ message }) {
   if (!message) return null;
   return (
-    <div style={{
-      position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
-      zIndex: 50, background: "#1C1915", border: "1px solid #C9A84C44",
-      borderRadius: 12, padding: "14px 24px",
-      boxShadow: "0 8px 32px #00000066",
+    <div className="glass" style={{
+      position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
+      zIndex: 50, background: T.surface + "EE", border: `1px solid ${T.accentSoft}`,
+      borderRadius: 100, padding: "12px 28px",
+      boxShadow: "0 8px 32px #00000044",
       display: "flex", alignItems: "center", gap: 10,
-      animation: "fadeInUp 0.4s ease",
+      animation: `fadeInUp 0.4s ${T.ease}`,
       maxWidth: "calc(100vw - 32px)",
     }}>
-      <span style={{ fontSize: 16, color: "#C9A84C" }}>◆</span>
       <span style={{
-        fontFamily: "'Cormorant Garamond', serif",
+        fontFamily: T.serif,
         fontSize: 15, fontStyle: "italic",
-        color: "#EDE5D5", lineHeight: 1.4,
+        color: T.text, lineHeight: 1.4,
       }}>
         {message}
       </span>
@@ -822,7 +865,7 @@ function MilestoneBanner({ message }) {
   );
 }
 
-// ─── GraphView ────────────────────────────────────────────────────────────────
+// ─── GraphView ───────────────────────────────────────────────────────────────
 function GraphView({ entries, customColors, onTagClick }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
@@ -835,7 +878,6 @@ function GraphView({ entries, customColors, onTagClick }) {
   });
   const animRef = useRef(null);
 
-  // Build graph data
   const graph = useMemo(() => {
     const tagSet = new Set();
     entries.forEach((e) => e.tags.forEach((t) => tagSet.add(t)));
@@ -848,7 +890,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     const edges = [];
     const tagIdMap = {};
 
-    // Tag nodes
     tags.forEach((tag) => {
       const id = `tag:${tag}`;
       tagIdMap[tag] = id;
@@ -857,11 +898,10 @@ function GraphView({ entries, customColors, onTagClick }) {
       nodes.push({ id, type: "tag", label: tag, color: c, radius: r, x: 0, y: 0, vx: 0, vy: 0, pinned: false });
     });
 
-    // Entry nodes
     entries.forEach((entry) => {
       const id = `entry:${entry.id}`;
       const primaryTag = entry.tags[0];
-      const c = primaryTag ? getTagColor(primaryTag, customColors) : { bg: "#2E2A24", text: "#7A6A52", dot: "#4A4438" };
+      const c = primaryTag ? getTagColor(primaryTag, customColors) : { bg: T.border, text: T.textDim, dot: T.textDim };
       nodes.push({ id, type: "entry", label: entry.text, tags: entry.tags, color: c, radius: 5, x: 0, y: 0, vx: 0, vy: 0, pinned: false });
 
       entry.tags.forEach((tag) => {
@@ -872,7 +912,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     return { nodes, edges, tags };
   }, [entries, customColors]);
 
-  // Initialize positions
   const initPositions = useCallback((width, height) => {
     const cx = width / 2;
     const cy = height / 2;
@@ -891,7 +930,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     graph.nodes.forEach((n) => { nodeMap[n.id] = n; });
 
     entryNodes.forEach((node) => {
-      // Place near first tag with jitter
       const firstEdge = graph.edges.find((e) => e.source === node.id);
       if (firstEdge) {
         const tagNode = nodeMap[firstEdge.target];
@@ -907,7 +945,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     simRef.current = { alpha: 1, nodeMap };
   }, [graph]);
 
-  // Force simulation tick
   const tick = useCallback(() => {
     if (!simRef.current) return;
     const { alpha, nodeMap } = simRef.current;
@@ -916,7 +953,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     const nodes = graph.nodes;
     const edges = graph.edges;
 
-    // Repulsion (all pairs)
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         const a = nodes[i], b = nodes[j];
@@ -933,7 +969,6 @@ function GraphView({ entries, customColors, onTagClick }) {
       }
     }
 
-    // Attraction (edges)
     edges.forEach(({ source, target }) => {
       const a = nodeMap[source], b = nodeMap[target];
       if (!a || !b) return;
@@ -947,7 +982,6 @@ function GraphView({ entries, customColors, onTagClick }) {
       if (!b.pinned) { b.vx -= fx; b.vy -= fy; }
     });
 
-    // Center gravity
     const canvas = canvasRef.current;
     if (canvas) {
       const cx = canvas.width / (2 * (window.devicePixelRatio || 1));
@@ -959,7 +993,6 @@ function GraphView({ entries, customColors, onTagClick }) {
       });
     }
 
-    // Apply velocity + damping
     nodes.forEach((n) => {
       if (n.pinned) return;
       n.vx *= 0.88;
@@ -971,7 +1004,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     simRef.current.alpha *= 0.997;
   }, [graph]);
 
-  // Render
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -985,14 +1017,11 @@ function GraphView({ entries, customColors, onTagClick }) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Background
-    ctx.fillStyle = "#111009";
+    ctx.fillStyle = T.bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Apply transform
     ctx.setTransform(zoom * dpr, 0, 0, zoom * dpr, panOffset.x * dpr, panOffset.y * dpr);
 
-    // Determine hovered node's connections
     const hoverConnected = new Set();
     if (hover) {
       graph.edges.forEach(({ source, target }) => {
@@ -1003,7 +1032,6 @@ function GraphView({ entries, customColors, onTagClick }) {
       });
     }
 
-    // Draw edges
     graph.edges.forEach(({ source, target }) => {
       const a = nodeMap[source], b = nodeMap[target];
       if (!a || !b) return;
@@ -1011,69 +1039,60 @@ function GraphView({ entries, customColors, onTagClick }) {
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
       ctx.lineTo(b.x, b.y);
-      ctx.strokeStyle = connected ? (b.type === "tag" ? b.color.dot + "88" : a.color.dot + "88") : "#2E2A2440";
+      ctx.strokeStyle = connected ? (b.type === "tag" ? b.color.dot + "88" : a.color.dot + "88") : T.border + "40";
       ctx.lineWidth = connected ? 1.5 : 0.5;
       ctx.stroke();
     });
 
-    // Draw nodes
     graph.nodes.forEach((node) => {
       const isHovered = hover && hover.id === node.id;
       const isConnected = hover && hoverConnected.has(node.id);
       const dimmed = hover && !isHovered && !isConnected;
 
       if (node.type === "tag") {
-        // Diamond shape
         const r = node.radius;
-        // Measure label to size diamond horizontally
-        ctx.font = `bold 10px 'JetBrains Mono', monospace`;
+        ctx.font = `italic 12px 'Cormorant Garamond', serif`;
         const labelW = ctx.measureText(node.label).width;
-        const hw = Math.max(r, labelW / 2 + 12); // half-width
-        const hh = r; // half-height
+        const pillW = labelW + 24;
+        const pillH = r * 1.4;
+        const pillR = pillH / 2; // fully rounded ends
 
         ctx.save();
-        ctx.shadowBlur = isHovered ? 24 : 12;
-        ctx.shadowColor = node.color.dot + (dimmed ? "22" : "55");
+        ctx.shadowBlur = isHovered ? 16 : 6;
+        ctx.shadowColor = node.color.dot + (dimmed ? "08" : "22");
 
         ctx.beginPath();
-        ctx.moveTo(node.x, node.y - hh);
-        ctx.lineTo(node.x + hw, node.y);
-        ctx.lineTo(node.x, node.y + hh);
-        ctx.lineTo(node.x - hw, node.y);
-        ctx.closePath();
+        ctx.roundRect(node.x - pillW / 2, node.y - pillH / 2, pillW, pillH, pillR);
 
-        ctx.fillStyle = dimmed ? node.color.bg + "66" : node.color.bg;
+        ctx.fillStyle = dimmed ? node.color.bg + "44" : node.color.bg;
         ctx.fill();
-        ctx.strokeStyle = dimmed ? node.color.dot + "33" : node.color.dot + "88";
-        ctx.lineWidth = isHovered ? 2 : 1;
+        ctx.strokeStyle = dimmed ? node.color.dot + "18" : node.color.dot + "44";
+        ctx.lineWidth = isHovered ? 1.5 : 0.5;
         ctx.stroke();
         ctx.restore();
 
-        // Label inside diamond
-        ctx.font = `bold 10px 'JetBrains Mono', monospace`;
+        ctx.font = `italic 12px 'Cormorant Garamond', serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillStyle = dimmed ? node.color.text + "44" : node.color.text;
+        ctx.fillStyle = dimmed ? node.color.text + "33" : node.color.text;
         ctx.fillText(node.label, node.x, node.y);
         ctx.textBaseline = "alphabetic";
       } else {
-        // Circle for entries
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-        ctx.fillStyle = dimmed ? node.color.dot + "22" : (isHovered || isConnected) ? node.color.dot + "CC" : node.color.dot + "66";
+        ctx.fillStyle = dimmed ? node.color.dot + "15" : (isHovered || isConnected) ? node.color.dot + "BB" : node.color.dot + "55";
         ctx.fill();
 
         if (isHovered) {
           ctx.beginPath();
           ctx.arc(node.x, node.y, node.radius + 3, 0, Math.PI * 2);
-          ctx.strokeStyle = "#C9A84C88";
-          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = T.accent + "66";
+          ctx.lineWidth = 1;
           ctx.stroke();
         }
       }
     });
 
-    // Tooltip for hovered entry
     if (hover && hover.type === "entry") {
       const canvasW = canvas.width / dpr;
       const canvasH = canvas.height / dpr;
@@ -1081,7 +1100,6 @@ function GraphView({ entries, customColors, onTagClick }) {
       const maxWidth = Math.min(220, canvasW * 0.6);
       ctx.font = `italic 14px 'Cormorant Garamond', serif`;
 
-      // Word wrap
       const words = text.split(" ");
       const lines = [];
       let line = "";
@@ -1101,45 +1119,39 @@ function GraphView({ entries, customColors, onTagClick }) {
       const boxW = maxWidth + pad * 2;
       const boxH = lines.length * lineHeight + pad * 2;
 
-      // Position tooltip, clamping to canvas edges
       let bx = hover.x + 15;
       let by = hover.y - boxH / 2;
 
-      // Convert to screen coords for clamping
       const screenRight = (bx + boxW) * zoom + panOffset.x;
       const screenBottom = (by + boxH) * zoom + panOffset.y;
       if (screenRight > canvasW) bx = hover.x - boxW - 10;
       if (screenBottom > canvasH) by = hover.y - boxH;
       if ((by * zoom + panOffset.y) < 0) by = hover.y + 10;
 
-      // Background
-      ctx.fillStyle = "#1C1915EE";
-      ctx.strokeStyle = "#2E2A24";
+      ctx.fillStyle = T.surface + "EE";
+      ctx.strokeStyle = T.border;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.roundRect(bx, by, boxW, boxH, 8);
       ctx.fill();
       ctx.stroke();
 
-      // Text
-      ctx.fillStyle = "#EDE5D5";
+      ctx.fillStyle = T.text;
       ctx.textAlign = "left";
       lines.forEach((l, i) => {
         ctx.fillText(l, bx + pad, by + pad + 12 + i * lineHeight);
       });
     }
 
-    // Stats
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.font = `10px 'JetBrains Mono', monospace`;
-    ctx.fillStyle = "#4A4438";
+    ctx.font = `italic 11px 'Cormorant Garamond', serif`;
+    ctx.fillStyle = T.textDim;
     ctx.textAlign = "left";
     const tagCount = graph.nodes.filter((n) => n.type === "tag").length;
     const entryCount = graph.nodes.filter((n) => n.type === "entry").length;
-    ctx.fillText(`${entryCount} entries · ${tagCount} tags`, 16, h - 12);
+    ctx.fillText(`${entryCount} entries · ${tagCount} tags`, 16, h - 14);
   }, [graph]);
 
-  // Animation loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || graph.nodes.length === 0) return;
@@ -1174,7 +1186,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     };
   }, [graph, tick, render, initPositions]);
 
-  // Re-init when entries change
   useEffect(() => {
     simRef.current = null;
     const canvas = canvasRef.current;
@@ -1184,20 +1195,18 @@ function GraphView({ entries, customColors, onTagClick }) {
     }
   }, [entries.length, initPositions]);
 
-  // Hit test helper
   const hitTest = useCallback((sx, sy) => {
     const { panOffset, zoom } = interRef.current;
     const wx = (sx - panOffset.x) / zoom;
     const wy = (sy - panOffset.y) / zoom;
-    // Check in reverse so top-drawn nodes are hit first
     for (let i = graph.nodes.length - 1; i >= 0; i--) {
       const n = graph.nodes[i];
       const dx = wx - n.x, dy = wy - n.y;
       if (n.type === "tag") {
-        // Diamond hit test: |dx|/hw + |dy|/hh <= 1
-        const hw = Math.max(n.radius, 30) + 4;
-        const hh = n.radius + 4;
-        if (Math.abs(dx) / hw + Math.abs(dy) / hh <= 1) return n;
+        // Pill hit test — rectangular with padding
+        const hw = Math.max(n.radius, 30) + 12;
+        const hh = n.radius * 0.7 + 4;
+        if (Math.abs(dx) < hw && Math.abs(dy) < hh) return n;
       } else {
         const hitRadius = n.radius + 6;
         if (dx * dx + dy * dy < hitRadius * hitRadius) return n;
@@ -1206,7 +1215,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     return null;
   }, [graph]);
 
-  // Mouse handlers
   const getCanvasPos = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
@@ -1263,7 +1271,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     const { panOffset, zoom } = interRef.current;
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const newZoom = Math.min(4, Math.max(0.15, zoom * delta));
-    // Zoom toward cursor
     const wx = (pos.x - panOffset.x) / zoom;
     const wy = (pos.y - panOffset.y) / zoom;
     interRef.current.zoom = newZoom;
@@ -1273,7 +1280,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     };
   };
 
-  // Touch handlers
   const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
       const touch = e.touches[0];
@@ -1343,9 +1349,8 @@ function GraphView({ entries, customColors, onTagClick }) {
       ref={containerRef}
       style={{
         width: "100%", height: "calc(100vh - 200px)", minHeight: 400,
-        borderRadius: 14, overflow: "hidden",
-        border: "1px solid #2E2A24", background: "#111009",
-        position: "relative",
+        borderRadius: 20, overflow: "hidden",
+        background: T.bg, position: "relative",
       }}
     >
       <canvas
@@ -1362,25 +1367,25 @@ function GraphView({ entries, customColors, onTagClick }) {
         style={{ display: "block", cursor: "grab", touchAction: "none" }}
       />
       <div style={{
-        position: "absolute", top: 12, right: 12,
-        fontFamily: "'JetBrains Mono', monospace", fontSize: 9,
-        color: "#4A4438", letterSpacing: "0.08em",
-        background: "#1C1915CC", padding: "5px 10px", borderRadius: 6,
-        border: "1px solid #2E2A24", pointerEvents: "none",
+        position: "absolute", top: 14, right: 14,
+        fontFamily: T.serif, fontSize: 11,
+        color: T.textDim, fontStyle: "italic",
+        background: T.surface + "CC", padding: "6px 14px", borderRadius: 100,
+        pointerEvents: "none",
       }}>
-        drag nodes · scroll to zoom · double-click tag to filter
+        drag · scroll to zoom · double-click tag to filter
       </div>
     </div>
   );
 }
 
-// ─── TimeFilterBar ────────────────────────────────────────────────────────────
+// ─── TimeFilterBar ───────────────────────────────────────────────────────────
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const MONTH_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 function TimeFilterBar({ timeFilter, setTimeFilter, setDisplayCount, entries }) {
   const mobile = useIsMobile();
-  const [popup, setPopup] = useState(null); // "month" or "year"
+  const [popup, setPopup] = useState(null);
   const longPressTimer = useRef(null);
   const popupRef = useRef(null);
 
@@ -1388,10 +1393,8 @@ function TimeFilterBar({ timeFilter, setTimeFilter, setDisplayCount, entries }) 
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  // Derive available years from entries
   const availableYears = [...new Set(entries.map((e) => new Date(e.createdAt).getFullYear()))].sort((a, b) => b - a);
 
-  // Derive available months (from entries, for the popup)
   const availableMonths = [...new Set(entries.map((e) => {
     const d = new Date(e.createdAt);
     return `${d.getFullYear()}-${d.getMonth()}`;
@@ -1422,11 +1425,9 @@ function TimeFilterBar({ timeFilter, setTimeFilter, setDisplayCount, entries }) 
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
   };
 
-  // Current labels
   const monthKey = `month:${currentMonth}:${currentYear}`;
   const yearKey = `year:${currentYear}`;
 
-  // Figure out active label for month/year buttons
   const activeMonthLabel = timeFilter.startsWith("month:")
     ? (() => {
         const [, m, y] = timeFilter.split(":").map(Number);
@@ -1441,47 +1442,36 @@ function TimeFilterBar({ timeFilter, setTimeFilter, setDisplayCount, entries }) 
     : String(currentYear);
 
   const btnStyle = (active) => ({
-    padding: mobile ? "6px 14px" : "3px 12px", borderRadius: 20,
-    border: `1px solid ${active ? "#C9A84C66" : "#2E2A24"}`,
-    background: active ? "#C9A84C15" : "transparent",
-    color: active ? "#C9A84C" : "#5C5448",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 11, letterSpacing: "0.06em", cursor: "pointer",
+    padding: mobile ? "7px 16px" : "5px 14px", borderRadius: 100,
+    border: "none",
+    background: active ? T.accentSoft : "transparent",
+    color: active ? T.accent : T.textDim,
+    fontFamily: T.serif, fontStyle: "italic",
+    fontSize: 13, cursor: "pointer",
     whiteSpace: "nowrap",
+    transition: `all 0.2s ${T.ease}`,
   });
 
   const popupStyle = {
-    position: "absolute", top: "100%", left: 0, marginTop: 6, zIndex: 20,
-    background: "#1C1915", border: "1px solid #2E2A24", borderRadius: 10,
-    padding: "10px 12px", display: "flex", flexWrap: "wrap", gap: 4,
-    boxShadow: "0 8px 24px #00000066", minWidth: 160, maxWidth: 280,
+    position: "absolute", top: "100%", left: 0, marginTop: 8, zIndex: 20,
+    background: T.surface + "F0", border: `1px solid ${T.border}`,
+    borderRadius: 16, padding: "12px 14px",
+    display: "flex", flexWrap: "wrap", gap: 6,
+    boxShadow: "0 12px 40px #00000044", minWidth: 160, maxWidth: 280,
   };
 
   return (
-    <div className="scroll-row" style={{ marginBottom: 16 }}>
-      <span style={{
-        fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-        color: "#4A4438", letterSpacing: "0.1em", textTransform: "uppercase", marginRight: 2,
-      }}>
-        when
-      </span>
-
-      {/* All time */}
+    <div className="controls-row" style={{ marginBottom: 20 }}>
       <button className="filter-btn" onClick={() => apply("all")} style={btnStyle(timeFilter === "all")}>
         all time
       </button>
-
-      {/* Today */}
       <button className="filter-btn" onClick={() => apply("today")} style={btnStyle(timeFilter === "today")}>
         today
       </button>
-
-      {/* This week */}
       <button className="filter-btn" onClick={() => apply("week")} style={btnStyle(timeFilter === "week")}>
         this week
       </button>
 
-      {/* Month — click for current, long-press for picker */}
       <span style={{ position: "relative" }}>
         <button
           className="filter-btn"
@@ -1505,10 +1495,7 @@ function TimeFilterBar({ timeFilter, setTimeFilter, setDisplayCount, entries }) 
                   key={key}
                   className="filter-btn"
                   onClick={() => { apply(key); setPopup(null); }}
-                  style={{
-                    ...btnStyle(active),
-                    padding: "3px 10px", fontSize: 10,
-                  }}
+                  style={{ ...btnStyle(active), padding: "3px 10px", fontSize: 12 }}
                 >
                   {MONTH_SHORT[month]} {year}
                 </button>
@@ -1518,7 +1505,6 @@ function TimeFilterBar({ timeFilter, setTimeFilter, setDisplayCount, entries }) 
         )}
       </span>
 
-      {/* Year — click for current, long-press for picker */}
       <span style={{ position: "relative" }}>
         <button
           className="filter-btn"
@@ -1542,10 +1528,7 @@ function TimeFilterBar({ timeFilter, setTimeFilter, setDisplayCount, entries }) 
                   key={key}
                   className="filter-btn"
                   onClick={() => { apply(key); setPopup(null); }}
-                  style={{
-                    ...btnStyle(active),
-                    padding: "3px 10px", fontSize: 10,
-                  }}
+                  style={{ ...btnStyle(active), padding: "3px 10px", fontSize: 12 }}
                 >
                   {y}
                 </button>
@@ -1558,9 +1541,139 @@ function TimeFilterBar({ timeFilter, setTimeFilter, setDisplayCount, entries }) 
   );
 }
 
-// ─── App ──────────────────────────────────────────────────────────────────────
+// ─── ControlsDrawer (search + filters, hidden by default) ────────────────────
+function ControlsDrawer({ open, searchText, setSearchText, allTags, activeFilter, setActiveFilter, timeFilter, setTimeFilter, setDisplayCount, entries, customColors, colorMode, setColorMode, colorPickerTag, setColorPickerTag, handleTagColorSelect, mobile }) {
+  if (!open) return null;
+
+  return (
+    <div style={{
+      animation: `gentleIn 0.25s ${T.ease}`,
+      marginBottom: 24,
+    }}>
+      {/* Search */}
+      <div style={{ position: "relative", marginBottom: 16 }}>
+        <input
+          value={searchText}
+          onChange={(e) => { setSearchText(e.target.value); setDisplayCount(1); }}
+          placeholder="search…"
+          style={{
+            width: "100%", background: "transparent",
+            border: "none", borderBottom: `1px solid ${T.border}`,
+            padding: "10px 0", fontFamily: T.serif, fontStyle: "italic",
+            fontSize: 15, color: T.text,
+            outline: "none", transition: `border-color 0.25s ${T.ease}`,
+          }}
+          onFocus={(e) => e.target.style.borderColor = T.accent}
+          onBlur={(e) => e.target.style.borderColor = T.border}
+        />
+        {searchText && (
+          <button
+            onClick={() => { setSearchText(""); setDisplayCount(1); }}
+            style={{
+              position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)",
+              background: "none", border: "none", cursor: "pointer",
+              fontFamily: T.serif, fontSize: 16, color: T.textDim,
+            }}
+          >
+            ×
+          </button>
+        )}
+      </div>
+
+      {/* Tag filters */}
+      {allTags.length > 0 && (
+        <div className="controls-row" style={{ marginBottom: 14 }}>
+          <button
+            onClick={() => { setColorMode((p) => !p); setColorPickerTag(null); }}
+            title={colorMode ? "Exit color mode" : "Customize colors"}
+            style={{
+              background: "none", border: "none", borderRadius: 6,
+              padding: "2px 4px", cursor: "pointer",
+              fontFamily: T.serif, fontSize: 13,
+              color: colorMode ? T.accent : T.textDim,
+              fontStyle: "italic",
+            }}
+          >
+            ✦
+          </button>
+          {[null, ...allTags].map((tag) => {
+            const active = activeFilter === tag;
+            const c = tag ? getTagColor(tag, customColors) : null;
+            return (
+              <span key={tag ?? "__all__"} style={{ position: "relative" }}>
+                <button
+                  className="filter-btn"
+                  onClick={() => {
+                    if (colorMode && tag) {
+                      setColorPickerTag(colorPickerTag === tag ? null : tag);
+                    } else {
+                      setActiveFilter(tag);
+                    }
+                  }}
+                  style={{
+                    padding: mobile ? "5px 12px" : "4px 10px", borderRadius: 100,
+                    border: "none",
+                    background: active ? (c ? c.bg + "AA" : T.accentSoft) : "transparent",
+                    color: active ? (c ? c.text : T.accent) : T.textDim,
+                    fontFamily: T.serif, fontStyle: "italic",
+                    fontSize: 13, cursor: "pointer",
+                    outline: colorMode && tag ? `1px dashed ${T.accentSoft}` : "none",
+                    outlineOffset: 2,
+                  }}
+                >
+                  {tag ?? "all"}
+                </button>
+                {colorMode && colorPickerTag === tag && tag && (
+                  <TagColorPicker
+                    tag={tag}
+                    customColors={customColors}
+                    onSelect={handleTagColorSelect}
+                    onClose={() => setColorPickerTag(null)}
+                  />
+                )}
+              </span>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Time filters */}
+      <TimeFilterBar timeFilter={timeFilter} setTimeFilter={setTimeFilter} setDisplayCount={setDisplayCount} entries={entries} />
+
+      {/* Search result count */}
+      {searchText.trim() && (
+        <p style={{
+          fontFamily: T.serif, fontSize: 13,
+          color: T.textDim, fontStyle: "italic", marginBottom: 8,
+        }}>
+          {entries.length} result{entries.length !== 1 ? "s" : ""}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── App ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const mobile = useIsMobile();
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem(THEME_KEY) || "dark"; } catch (_) { return "dark"; }
+  });
+
+  // Update global T and body whenever theme changes
+  T = THEMES[theme] || THEMES.dark;
+  useEffect(() => {
+    document.body.style.background = T.bg;
+    document.body.style.color = T.text;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", T.bg);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem(THEME_KEY, next);
+  };
+
   const [entries,      setEntries]      = useState([]);
   const [loaded,       setLoaded]       = useState(false);
   const [saveStatus,   setSaveStatus]   = useState("idle");
@@ -1575,14 +1688,14 @@ export default function App() {
   const [colorPickerTag, setColorPickerTag] = useState(null);
   const [timeFilter,   setTimeFilter]   = useState("all");
   const [displayCount, setDisplayCount] = useState(1);
-  const [viewMode,     setViewMode]     = useState("list"); // "list" or "graph"
+  const [viewMode,     setViewMode]     = useState("list");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSettings,   setShowSettings]   = useState(false);
+  const [showControls,   setShowControls]   = useState(false);
   const [milestoneMsg,   setMilestoneMsg]   = useState(null);
   const textareaRef = useRef(null);
   const nextId      = useRef(1);
 
-  // Load persisted data on mount
   useEffect(() => {
     const saved = loadEntries();
     const savedId = loadNextId();
@@ -1592,11 +1705,9 @@ export default function App() {
       setVisibleIds(new Set(migrated.map((e) => e.id)));
       nextId.current = savedId ?? (Math.max(...migrated.map((e) => e.id)) + 1);
     }
-    // Record first use timestamp
     if (!localStorage.getItem(FIRST_USE_KEY)) {
       localStorage.setItem(FIRST_USE_KEY, new Date().toISOString());
     }
-    // Show onboarding if never completed
     if (!localStorage.getItem(ONBOARDING_KEY)) {
       setShowOnboarding(true);
     }
@@ -1608,10 +1719,6 @@ export default function App() {
   }, [loaded]);
 
   const allTags = [...new Set(entries.flatMap((e) => e.tags))].sort();
-
-  const applyTagFilter = (tag) => {
-    setActiveFilter(tag);
-  };
 
   const handleTagKey = (e) => {
     if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
@@ -1659,7 +1766,6 @@ export default function App() {
     setDisplayCount(1);
     save(newEntries);
 
-    // Check milestones
     const newCount = newEntries.length;
     const milestone = MILESTONES.find((m) => m.count === newCount);
     if (milestone) {
@@ -1743,7 +1849,7 @@ export default function App() {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
   };
 
-  // Filter by tag, then by time, then by search text
+  // Filtering
   let filteredEntries = activeFilter
     ? entries.filter((e) => e.tags.includes(activeFilter))
     : entries;
@@ -1787,122 +1893,101 @@ export default function App() {
   const displayedEntries = filteredEntries.slice(0, displayCount);
   const hasMore = displayCount < totalFiltered;
 
-  // Loading state
   if (!loaded) return (
     <div style={{
-      minHeight: "100vh", background: "#111009",
+      minHeight: "100vh", background: T.bg,
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
       <p style={{
-        fontFamily: "'Cormorant Garamond', serif",
-        fontStyle: "italic", fontSize: 18, color: "#4A4438",
+        fontFamily: T.serif, fontStyle: "italic",
+        fontSize: 18, color: T.textDim,
       }}>
-        loading your observations…
+        loading…
       </p>
     </div>
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#111009", paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: T.bg, paddingBottom: 80 }}>
 
-      {/* ── Onboarding overlay ── */}
       {showOnboarding && (
         <Onboarding onComplete={() => setShowOnboarding(false)} />
       )}
 
-      {/* ── Settings panel ── */}
       {showSettings && (
         <SettingsPanel
           onClose={() => setShowSettings(false)}
           onReset={handleReset}
           onImport={handleImport}
           onReplayOnboarding={() => setShowOnboarding(true)}
+          theme={theme}
+          onToggleTheme={toggleTheme}
         />
       )}
 
-      {/* ── Milestone banner ── */}
       <MilestoneBanner message={milestoneMsg} />
 
-      {/* ── Header ── */}
-      <header style={{
-        borderBottom: "1px solid #1E1C17",
-        padding: mobile ? "12px 16px" : "20px 24px",
+      {/* ── Header — minimal, just title and essentials ── */}
+      <header className="glass" style={{
+        padding: mobile ? "14px 20px" : "16px 28px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        position: "sticky", top: 0, background: "#111009", zIndex: 10,
+        position: "sticky", top: 0, background: T.bg + "DD", zIndex: 10,
       }}>
         <div>
           <h1 style={{
-            margin: 0, fontFamily: "'DM Serif Display', serif",
-            fontSize: 22, color: "#EDE5D5", fontWeight: 400, letterSpacing: "-0.01em",
+            margin: 0, fontFamily: T.display,
+            fontSize: 20, color: T.text, fontWeight: 400,
+            letterSpacing: "-0.02em",
           }}>
-            metaphor{" "}
-            <span style={{ color: "#C9A84C", fontStyle: "italic" }}>hunter</span>
+            lucid
           </h1>
           <p style={{
-            margin: "2px 0 0", fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 10, color: "#4A4438", letterSpacing: "0.12em", textTransform: "uppercase",
+            margin: "2px 0 0", fontFamily: T.serif,
+            fontSize: 12, color: T.textDim, fontStyle: "italic",
+            letterSpacing: "0.04em",
           }}>
-            step 1 — notice
+            glimpse
           </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* View toggle */}
-          <div style={{
-            display: "flex", background: "#1C1915", border: "1px solid #2E2A24",
-            borderRadius: 8, overflow: "hidden",
-          }}>
-            <button
-              onClick={() => setViewMode("list")}
-              title="List view"
-              style={{
-                background: viewMode === "list" ? "#C9A84C22" : "transparent",
-                border: "none", padding: "7px 10px", cursor: "pointer",
-                color: viewMode === "list" ? "#C9A84C" : "#4A4438",
-                fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
-                borderRight: "1px solid #2E2A24",
-                transition: "all 0.15s",
-              }}
-            >
-              ☰
-            </button>
-            <button
-              onClick={() => setViewMode("graph")}
-              title="Graph view"
-              style={{
-                background: viewMode === "graph" ? "#C9A84C22" : "transparent",
-                border: "none", padding: "7px 10px", cursor: "pointer",
-                color: viewMode === "graph" ? "#C9A84C" : "#4A4438",
-                fontFamily: "'JetBrains Mono', monospace", fontSize: 12,
-                transition: "all 0.15s",
-              }}
-            >
-              ◈
-            </button>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {/* Search/filter toggle */}
+          <button
+            onClick={() => setShowControls((p) => !p)}
+            className="press"
+            style={{
+              background: showControls ? T.accentSoft : "none",
+              border: "none", borderRadius: 100,
+              padding: "7px 12px", cursor: "pointer",
+              fontFamily: T.serif, fontSize: 14, fontStyle: "italic",
+              color: showControls ? T.accent : T.textDim,
+            }}
+          >
+            {showControls ? "close" : "filter"}
+          </button>
 
-          {/* Observation count */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            background: "#1C1915", border: "1px solid #2E2A24",
-            borderRadius: 8, padding: "7px 13px",
-          }}>
-            <span style={{ fontSize: 12, color: "#C9A84C" }}>◆</span>
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: "#7A6A52" }}>
-              {entries.length} observation{entries.length !== 1 ? "s" : ""}
-            </span>
-          </div>
+          {/* View toggle */}
+          <button
+            onClick={() => setViewMode(viewMode === "list" ? "graph" : "list")}
+            className="press"
+            style={{
+              background: "none", border: "none",
+              padding: "7px 12px", cursor: "pointer",
+              fontFamily: T.serif, fontSize: 14, fontStyle: "italic",
+              color: T.textDim,
+            }}
+          >
+            {viewMode === "list" ? "map" : "list"}
+          </button>
 
           {/* Settings */}
           <button
             onClick={() => setShowSettings(true)}
-            title="Settings"
+            className="press"
             style={{
-              background: "#1C1915", border: "1px solid #2E2A24",
-              borderRadius: 8, padding: "7px 10px", cursor: "pointer",
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 13, color: "#4A4438",
-              transition: "color 0.15s",
+              background: "none", border: "none",
+              padding: "7px 10px", cursor: "pointer",
+              fontSize: 14, color: T.textDim,
             }}
           >
             ⚙
@@ -1910,26 +1995,10 @@ export default function App() {
         </div>
       </header>
 
-      <main style={{ maxWidth: 680, margin: "0 auto", padding: mobile ? "20px 14px 0" : "36px 20px 0" }}>
+      <main style={{ maxWidth: 600, margin: "0 auto", padding: mobile ? "28px 20px 0" : "48px 24px 0" }}>
 
-        {/* ── Capture zone ── */}
-        <div style={{
-          background: "#1C1915",
-          border: `1px solid ${text.length > 0 ? "#C9A84C44" : "#2E2A24"}`,
-          borderRadius: 14, padding: mobile ? "16px" : "22px",
-          marginBottom: mobile ? 24 : 32,
-          transition: "border-color 0.3s, box-shadow 0.3s",
-          boxShadow: text.length > 0 ? "0 0 0 4px #C9A84C08" : "none",
-        }}>
-          <p style={{
-            margin: "0 0 10px",
-            fontFamily: "'DM Serif Display', serif",
-            fontSize: 12, color: "#5C5448",
-            letterSpacing: "0.1em", textTransform: "uppercase",
-          }}>
-            What are you noticing?
-          </p>
-
+        {/* ── Capture zone — open, inviting, no box ── */}
+        <div style={{ marginBottom: mobile ? 36 : 48 }}>
           <textarea
             ref={textareaRef}
             value={text}
@@ -1941,25 +2010,28 @@ export default function App() {
               }
             }}
             onKeyDown={handleKeyDown}
-            placeholder="The way light falls through those leaves reminds me of..."
-            rows={mobile ? 2 : 4}
+            placeholder="What are you noticing?"
+            rows={mobile ? 2 : 3}
             style={{
               width: "100%", background: "transparent", border: "none", resize: "none",
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: 18, lineHeight: 1.65, color: "#EDE5D5",
-              fontWeight: 300, fontStyle: text.length > 0 ? "italic" : "normal",
+              fontFamily: T.serif,
+              fontSize: mobile ? 20 : 22, lineHeight: 1.75, color: T.text,
+              fontWeight: 300,
+              fontStyle: text.length > 0 ? "italic" : "normal",
               letterSpacing: "0.01em",
               ...(mobile ? { minHeight: 60, overflow: "hidden" } : {}),
             }}
           />
 
-          {/* Tags + submit */}
+          {/* Tags + submit — appears when there's text */}
           <div style={{
-            borderTop: "1px solid #2E2A24", paddingTop: 12, marginTop: 4,
-            display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6,
+            display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8,
+            marginTop: 8,
+            opacity: text.trim() ? 1 : 0.4,
+            transition: `opacity 0.3s ${T.ease}`,
           }}>
             {pendingTags.map((t) => (
-              <TagPill
+              <TagAnnotation
                 key={t} tag={t} removable customColors={customColors}
                 onClick={() => setPendingTags((p) => p.filter((x) => x !== t))}
               />
@@ -1968,30 +2040,30 @@ export default function App() {
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKey}
-              placeholder={pendingTags.length === 0 ? "add tags (↵ to confirm)…" : ""}
+              placeholder={pendingTags.length === 0 ? "tags…" : ""}
               style={{
                 background: "transparent", border: "none",
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 11, color: "#9A8E7A", letterSpacing: "0.06em",
-                width: pendingTags.length > 0 ? 130 : 200, flexShrink: 0,
+                fontFamily: T.serif, fontStyle: "italic",
+                fontSize: 13, color: T.textMuted,
+                width: pendingTags.length > 0 ? 100 : 60, flexShrink: 0,
               }}
             />
 
             <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
               <SaveBadge status={saveStatus} />
               <button
-                className="submit-btn"
+                className="submit-btn press"
                 onClick={handleSubmit}
                 disabled={!text.trim()}
                 style={{
-                  background: text.trim() ? "#C9A84C" : "#2A2520",
-                  border: "none", borderRadius: 8,
-                  padding: mobile ? "10px 20px" : "8px 18px",
-                  fontFamily: "'DM Serif Display', serif",
-                  fontSize: 14, letterSpacing: "0.02em",
-                  color: text.trim() ? "#111009" : "#4A4438",
+                  background: text.trim() ? T.accent : "transparent",
+                  border: text.trim() ? "none" : `1px solid ${T.border}`,
+                  borderRadius: 100,
+                  padding: mobile ? "9px 24px" : "8px 22px",
+                  fontFamily: T.display,
+                  fontSize: 14,
+                  color: text.trim() ? T.bg : T.textDim,
                   cursor: text.trim() ? "pointer" : "default",
-                  transition: "background 0.2s",
                   ...(mobile ? { minHeight: 40 } : {}),
                 }}
               >
@@ -1999,6 +2071,13 @@ export default function App() {
               </button>
             </div>
           </div>
+
+          {/* Subtle divider */}
+          <div style={{
+            marginTop: 24,
+            height: 1,
+            background: `linear-gradient(to right, transparent, ${T.border}, transparent)`,
+          }} />
         </div>
 
         {viewMode === "graph" ? (
@@ -2006,144 +2085,73 @@ export default function App() {
             entries={entries}
             customColors={customColors}
             onTagClick={(tag) => {
-              applyTagFilter(tag);
+              setActiveFilter(tag);
               setViewMode("list");
             }}
           />
         ) : (
           <>
-            {/* ── Search bar ── */}
-            <div style={{
-              marginBottom: 16,
-              position: "relative",
-            }}>
-              <span style={{
-                position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
-                fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: "#4A4438",
-                pointerEvents: "none",
-              }}>
-                ⌕
-              </span>
-              <input
-                value={searchText}
-                onChange={(e) => { setSearchText(e.target.value); setDisplayCount(1); }}
-                placeholder="search observations…"
-                style={{
-                  width: "100%", background: "#1C1915", border: "1px solid #2E2A24",
-                  borderRadius: 10, padding: "10px 14px 10px 36px",
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 12, color: "#EDE5D5", letterSpacing: "0.04em",
-                  outline: "none", transition: "border-color 0.2s",
-                }}
-                onFocus={(e) => e.target.style.borderColor = "#C9A84C44"}
-                onBlur={(e) => e.target.style.borderColor = "#2E2A24"}
-              />
-              {searchText && (
-                <button
-                  onClick={() => { setSearchText(""); setDisplayCount(1); }}
-                  style={{
-                    position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)",
-                    background: "none", border: "none", cursor: "pointer",
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: 14, color: "#5C5448",
-                  }}
-                >
-                  ×
-                </button>
-              )}
-            </div>
+            {/* ── Controls drawer ── */}
+            <ControlsDrawer
+              open={showControls}
+              searchText={searchText}
+              setSearchText={setSearchText}
+              allTags={allTags}
+              activeFilter={activeFilter}
+              setActiveFilter={setActiveFilter}
+              timeFilter={timeFilter}
+              setTimeFilter={setTimeFilter}
+              setDisplayCount={setDisplayCount}
+              entries={entries}
+              customColors={customColors}
+              colorMode={colorMode}
+              setColorMode={setColorMode}
+              colorPickerTag={colorPickerTag}
+              setColorPickerTag={setColorPickerTag}
+              handleTagColorSelect={handleTagColorSelect}
+              mobile={mobile}
+            />
 
-            {/* ── Tag filters ── */}
-            {allTags.length > 0 && (
-              <div className="scroll-row" style={{ marginBottom: 22 }}>
-                <span style={{
-                  fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-                  color: "#4A4438", letterSpacing: "0.1em", textTransform: "uppercase", marginRight: 2,
-                }}>
-                  filter
-                </span>
-                <button
-                  onClick={() => { setColorMode((p) => !p); setColorPickerTag(null); }}
-                  title={colorMode ? "Exit color customization" : "Customize tag colors"}
-                  style={{
-                    background: colorMode ? "#C9A84C22" : "none",
-                    border: colorMode ? "1px solid #C9A84C44" : "1px solid transparent",
-                    borderRadius: 6, padding: "2px 7px", cursor: "pointer",
-                    fontFamily: "'JetBrains Mono', monospace", fontSize: 11,
-                    color: colorMode ? "#C9A84C" : "#4A4438",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  ✦
-                </button>
-                {[null, ...allTags].map((tag) => {
-                  const active = activeFilter === tag;
-                  const c = tag ? getTagColor(tag, customColors) : null;
-                  return (
-                    <span key={tag ?? "__all__"} style={{ position: "relative" }}>
-                      <button
-                        className="filter-btn"
-                        onClick={() => {
-                          if (colorMode && tag) {
-                            setColorPickerTag(colorPickerTag === tag ? null : tag);
-                          } else {
-                            applyTagFilter(tag);
-                          }
-                        }}
-                        style={{
-                          padding: mobile ? "6px 14px" : "3px 12px", borderRadius: 20,
-                          border: `1px solid ${active ? (c ? c.dot + "88" : "#C9A84C66") : (c ? c.dot + "22" : "#2E2A24")}`,
-                          background: active ? (c ? c.bg : "#C9A84C15") : "transparent",
-                          color: active ? (c ? c.text : "#C9A84C") : "#5C5448",
-                          fontFamily: "'JetBrains Mono', monospace",
-                          fontSize: 11, letterSpacing: "0.06em", cursor: "pointer",
-                          display: "inline-flex", alignItems: "center", gap: 5,
-                          outline: colorMode && tag ? "1px dashed #C9A84C44" : "none",
-                          outlineOffset: 1,
-                        }}
-                      >
-                        {c && <span style={{ width: 5, height: 5, borderRadius: "50%", background: c.dot }} />}
-                        {tag ?? "all"}
-                      </button>
-                      {colorMode && colorPickerTag === tag && tag && (
-                        <TagColorPicker
-                          tag={tag}
-                          customColors={customColors}
-                          onSelect={handleTagColorSelect}
-                          onClose={() => setColorPickerTag(null)}
-                        />
-                      )}
-                    </span>
-                  );
-                })}
+            {/* Active filter indicator */}
+            {(activeFilter || timeFilter !== "all") && !showControls && (
+              <div style={{
+                display: "flex", gap: 8, alignItems: "center", marginBottom: 16,
+                fontFamily: T.serif, fontSize: 13, fontStyle: "italic", color: T.textDim,
+              }}>
+                {activeFilter && (
+                  <span>
+                    {activeFilter}
+                    <button onClick={() => setActiveFilter(null)} style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      color: T.textDim, fontFamily: T.serif, fontSize: 13, marginLeft: 4,
+                    }}>×</button>
+                  </span>
+                )}
+                {timeFilter !== "all" && (
+                  <span>
+                    {timeFilter === "today" ? "today" : timeFilter === "week" ? "this week" : timeFilter}
+                    <button onClick={() => setTimeFilter("all")} style={{
+                      background: "none", border: "none", cursor: "pointer",
+                      color: T.textDim, fontFamily: T.serif, fontSize: 13, marginLeft: 4,
+                    }}>×</button>
+                  </span>
+                )}
               </div>
             )}
 
-            {/* ── Time filters ── */}
-            <TimeFilterBar timeFilter={timeFilter} setTimeFilter={setTimeFilter} setDisplayCount={setDisplayCount} entries={entries} />
-
-            {/* ── Search result count ── */}
-            {searchText.trim() && (
-              <p style={{
-                fontFamily: "'JetBrains Mono', monospace", fontSize: 10,
-                color: "#5C5448", letterSpacing: "0.06em", marginBottom: 12,
-              }}>
-                {totalFiltered} result{totalFiltered !== 1 ? "s" : ""} for &ldquo;{searchText}&rdquo;
-              </p>
-            )}
-
-            {/* ── Entries feed ── */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* ── Entries ── */}
+            <div style={{ display: "flex", flexDirection: "column" }}>
               {totalFiltered === 0 ? (
-                <div style={{ textAlign: "center", padding: "56px 0", color: "#4A4438" }}>
-                  <p style={{ fontFamily: "'DM Serif Display', serif", fontSize: 20, fontStyle: "italic", margin: 0 }}>
-                    {searchText ? `No observations matching "${searchText}".`
+                <div style={{ textAlign: "center", padding: "48px 0", color: T.textDim }}>
+                  <p style={{ fontFamily: T.display, fontSize: 20, fontStyle: "italic", margin: 0 }}>
+                    {searchText ? `Nothing matching "${searchText}".`
                       : activeFilter ? `No observations tagged "${activeFilter}" yet.`
-                      : timeFilter !== "all" ? `No observations ${timeFilter === "today" ? "today" : "this " + timeFilter}.`
-                      : "Your observation journal is empty."}
+                      : timeFilter !== "all" ? "Nothing in this period."
+                      : "Your journal is empty."}
                   </p>
-                  <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, marginTop: 8, letterSpacing: "0.08em" }}>
-                    {searchText ? "Try a different search term."
-                      : "Look around you. What catches your attention right now?"}
+                  <p style={{ fontFamily: T.serif, fontSize: 14, marginTop: 8, fontStyle: "italic" }}>
+                    {searchText ? "Try a different search."
+                      : "Look around you. What catches your attention?"}
                   </p>
                 </div>
               ) : (
@@ -2155,69 +2163,55 @@ export default function App() {
                       visible={visibleIds.has(entry.id)}
                       searchQuery={searchText}
                       customColors={customColors}
-                      onTagClick={(tag) => applyTagFilter(activeFilter === tag ? null : tag)}
+                      onTagClick={(tag) => setActiveFilter(activeFilter === tag ? null : tag)}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
                       onDeleteRevision={handleDeleteRevision}
                     />
                   ))}
 
-                  {/* Show more / show all controls */}
                   {hasMore && (
                     <div style={{
-                      display: "flex", justifyContent: "center", gap: 12,
-                      padding: "16px 0",
+                      display: "flex", justifyContent: "center", gap: 14,
+                      padding: "20px 0",
                     }}>
                       <button
                         onClick={() => setDisplayCount((c) => c + 4)}
+                        className="press"
                         style={{
-                          background: "#1C1915", border: "1px solid #2E2A24",
-                          borderRadius: 8, padding: "8px 20px", cursor: "pointer",
-                          fontFamily: "'JetBrains Mono', monospace",
-                          fontSize: 11, color: "#7A6A52", letterSpacing: "0.06em",
-                          display: "flex", alignItems: "center", gap: 6,
-                          transition: "border-color 0.15s",
+                          background: "none", border: "none", cursor: "pointer",
+                          fontFamily: T.serif, fontSize: 14, fontStyle: "italic",
+                          color: T.textMuted,
                         }}
-                        onMouseEnter={(e) => e.target.style.borderColor = "#C9A84C44"}
-                        onMouseLeave={(e) => e.target.style.borderColor = "#2E2A24"}
                       >
-                        <span style={{ fontSize: 14 }}>▼</span>
-                        show more ({Math.min(4, totalFiltered - displayCount)})
+                        more ({Math.min(4, totalFiltered - displayCount)})
                       </button>
+                      <span style={{ color: T.textFaint }}>·</span>
                       <button
                         onClick={() => setDisplayCount(totalFiltered)}
+                        className="press"
                         style={{
-                          background: "none", border: "1px solid #2E2A24",
-                          borderRadius: 8, padding: "8px 20px", cursor: "pointer",
-                          fontFamily: "'JetBrains Mono', monospace",
-                          fontSize: 11, color: "#5C5448", letterSpacing: "0.06em",
-                          transition: "border-color 0.15s",
+                          background: "none", border: "none", cursor: "pointer",
+                          fontFamily: T.serif, fontSize: 14, fontStyle: "italic",
+                          color: T.textDim,
                         }}
-                        onMouseEnter={(e) => e.target.style.borderColor = "#C9A84C44"}
-                        onMouseLeave={(e) => e.target.style.borderColor = "#2E2A24"}
                       >
-                        show all ({totalFiltered})
+                        all ({totalFiltered})
                       </button>
                     </div>
                   )}
 
-                  {/* Collapse button when showing more than 1 */}
                   {!hasMore && displayCount > 1 && totalFiltered > 1 && (
-                    <div style={{ display: "flex", justifyContent: "center", padding: "16px 0" }}>
+                    <div style={{ display: "flex", justifyContent: "center", padding: "20px 0" }}>
                       <button
                         onClick={() => setDisplayCount(1)}
+                        className="press"
                         style={{
-                          background: "none", border: "1px solid #2E2A24",
-                          borderRadius: 8, padding: "8px 20px", cursor: "pointer",
-                          fontFamily: "'JetBrains Mono', monospace",
-                          fontSize: 11, color: "#5C5448", letterSpacing: "0.06em",
-                          display: "flex", alignItems: "center", gap: 6,
-                          transition: "border-color 0.15s",
+                          background: "none", border: "none", cursor: "pointer",
+                          fontFamily: T.serif, fontSize: 14, fontStyle: "italic",
+                          color: T.textDim,
                         }}
-                        onMouseEnter={(e) => e.target.style.borderColor = "#C9A84C44"}
-                        onMouseLeave={(e) => e.target.style.borderColor = "#2E2A24"}
                       >
-                        <span style={{ fontSize: 14 }}>▲</span>
                         collapse
                       </button>
                     </div>
@@ -2226,12 +2220,12 @@ export default function App() {
               )}
             </div>
 
-            {/* ── Footer quote ── */}
-            <div style={{ marginTop: 56, textAlign: "center", padding: "0 20px" }}>
+            {/* ── Footer ── */}
+            <div style={{ marginTop: 48, textAlign: "center", padding: "0 20px" }}>
               <p style={{
-                fontFamily: "'Cormorant Garamond', serif",
-                fontSize: 15, fontStyle: "italic",
-                color: "#3A3428", lineHeight: 1.7, margin: 0,
+                fontFamily: T.serif,
+                fontSize: 14, fontStyle: "italic",
+                color: T.textFaint, lineHeight: 1.8, margin: 0,
               }}>
                 &ldquo;You are revealed by what you consistently notice<br />
                 and how you make sense of what you notice.&rdquo;

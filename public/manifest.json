@@ -1,14 +1,14 @@
 {
-  "name": "Metaphor Hunter",
-  "short_name": "Metaphor",
-  "description": "Capture metaphors and observations from daily life",
-  "start_url": "/",
+  "name": "Lucid",
+  "short_name": "Lucid",
+  "description": "Learn to see. Capture observations from daily life.",
+  "start_url": "/metaphor-hunter/",
   "display": "standalone",
-  "background_color": "#111009",
-  "theme_color": "#111009",
+  "background_color": "#141210",
+  "theme_color": "#141210",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/metaphor-hunter/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"

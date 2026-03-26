@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\niran\\metaphor-hunter\\.github"
+    ]
+  }
+}
