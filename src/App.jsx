@@ -1410,7 +1410,7 @@ function GraphView({ entries, customColors, onTagClick }) {
     const timeSpan = maxTime - minTime || 86400000; // at least 1 day
 
     const margin = 80;
-    const timelineY = h / 2;
+    const timelineY = h * 0.78; // axis near the bottom
     const timelineLeft = margin;
     const timelineRight = w - margin;
     const timelineW = timelineRight - timelineLeft;
@@ -1443,7 +1443,6 @@ function GraphView({ entries, customColors, onTagClick }) {
     ctx.textAlign = "center";
     monthLabels.forEach(({ time, label }) => {
       const x = timeToX(time);
-      // tick mark
       ctx.beginPath();
       ctx.moveTo(x, timelineY - 4);
       ctx.lineTo(x, timelineY + 4);
@@ -1453,19 +1452,42 @@ function GraphView({ entries, customColors, onTagClick }) {
       ctx.fillText(label, x, timelineY + 18);
     });
 
-    // Build a hash for y-offset to avoid overlap (deterministic from id)
-    const usedPositions = {};
-    const getYOffset = (node, isAbove) => {
-      const hash = String(node.id).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-      const base = 30 + (hash % 60);
-      return isAbove ? -base : base;
-    };
+    // Cluster entries: group by proximity on x-axis, then fan out vertically
+    const entryPositions = {};
+    const sortedEntries = [...entryNodes].sort((a, b) => a.createdAt - b.createdAt);
+    const clusterGap = 12; // min px between nodes before clustering
+    const placed = []; // {x, y} of already-placed nodes
 
-    // Draw edges (entry to tag)
+    sortedEntries.forEach((node) => {
+      const t = new Date(node.createdAt).getTime();
+      const baseX = timeToX(t);
+      let x = baseX;
+      let y = timelineY - 20; // start just above the axis
+
+      // Find how many nodes are near this x position
+      const nearby = placed.filter((p) => Math.abs(p.x - baseX) < clusterGap);
+
+      if (nearby.length > 0) {
+        // Spiral outward from cluster center
+        const ring = nearby.length;
+        const angle = (ring * 2.4) + (node.id.charCodeAt(node.id.length - 1) * 0.1); // golden angle spread
+        const radius = 12 + ring * 6;
+        x = baseX + Math.cos(angle) * radius * 0.6;
+        y = (timelineY - 20) - Math.abs(Math.sin(angle)) * radius - 8;
+      } else {
+        // slight deterministic vertical offset
+        const hash = String(node.id).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+        y = timelineY - 20 - (hash % 30);
+      }
+
+      entryPositions[node.id] = { x, y };
+      placed.push({ x, y });
+    });
+
+    // Position tags above entries
     const tagIdMap = {};
     tagNodes.forEach((tn) => { tagIdMap[tn.id] = tn; });
 
-    // Position tags above timeline near their associated entries
     const tagPositions = {};
     tagNodes.forEach((tn) => {
       const connectedEntries = graph.edges
@@ -1475,19 +1497,14 @@ function GraphView({ entries, customColors, onTagClick }) {
       if (connectedEntries.length === 0) return;
       const avgTime = connectedEntries.reduce((s, n) => s + new Date(n.createdAt).getTime(), 0) / connectedEntries.length;
       const x = timeToX(avgTime);
+      // Stack tags at different heights above entries
       const hash = tn.label.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-      const y = timelineY - 90 - (hash % 50);
+      const y = timelineY - 160 - (hash % 80);
       tagPositions[tn.id] = { x, y };
     });
 
-    // Position entry nodes below the timeline
-    const entryPositions = {};
-    entryNodes.forEach((node) => {
-      const t = new Date(node.createdAt).getTime();
-      const x = timeToX(t);
-      const y = timelineY + getYOffset(node, false);
-      entryPositions[node.id] = { x, y };
-    });
+    // Cache positions for hit testing
+    tlPositionsRef.current = { entries: entryPositions, tags: tagPositions };
 
     // Draw edges
     graph.edges.forEach(({ source, target }) => {
@@ -1511,7 +1528,8 @@ function GraphView({ entries, customColors, onTagClick }) {
         const t = new Date(edit.editedAt).getTime();
         if (t < minTime || t > maxTime) return;
         const x = timeToX(t);
-        const y = timelineY + getYOffset(node, false) + 8;
+        const entryPos = entryPositions[node.id];
+        const y = entryPos ? entryPos.y + 10 : timelineY - 30;
         ctx.beginPath();
         ctx.arc(x, y, 3, 0, Math.PI * 2);
         ctx.fillStyle = node.color.dot.startsWith("hsl") ? node.color.dot.replace("72%)", "72%, 0.25)").replace("hsl(", "hsla(") : node.color.dot + "40";
@@ -1616,54 +1634,32 @@ function GraphView({ entries, customColors, onTagClick }) {
   }, [graph]);
 
   // Timeline hit test — uses positioned nodes
+  // Cache timeline positions from render for hit testing
+  const tlPositionsRef = useRef({ entries: {}, tags: {} });
+
   const timelineHitTest = useCallback((sx, sy) => {
     const { panOffset, zoom } = interRef.current;
     const wx = (sx - panOffset.x) / zoom;
     const wy = (sy - panOffset.y) / zoom;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    const dpr = window.devicePixelRatio || 1;
-    const w = canvas.width / dpr;
-    const h = canvas.height / dpr;
-
-    const entryNodes = graph.nodes.filter((n) => n.type === "entry" && n.createdAt);
-    const tagNodes = graph.nodes.filter((n) => n.type === "tag");
-    if (entryNodes.length === 0) return null;
-
-    const timestamps = entryNodes.map((n) => new Date(n.createdAt).getTime());
-    const minTime = Math.min(...timestamps);
-    const maxTime = Math.max(...timestamps);
-    const timeSpan = maxTime - minTime || 86400000;
-    const margin = 80;
-    const timelineY = h / 2;
-    const timelineLeft = margin;
-    const timelineW = w - 2 * margin;
-    const timeToX = (t) => timelineLeft + ((t - minTime) / timeSpan) * timelineW;
+    const { entries: ep, tags: tp } = tlPositionsRef.current;
 
     // Check entry nodes
-    for (const node of entryNodes) {
-      const t = new Date(node.createdAt).getTime();
-      const x = timeToX(t);
-      const hash = String(node.id).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-      const y = timelineY + 30 + (hash % 60);
-      const dx = wx - x, dy = wy - y;
+    for (const node of graph.nodes) {
+      if (node.type !== "entry") continue;
+      const pos = ep[node.id];
+      if (!pos) continue;
+      const dx = wx - pos.x, dy = wy - pos.y;
       if (dx * dx + dy * dy < 100) return node;
     }
 
     // Check tag nodes
-    for (const tn of tagNodes) {
-      const connectedEntries = graph.edges
-        .filter((e) => e.target === tn.id)
-        .map((e) => entryNodes.find((n) => n.id === e.source))
-        .filter(Boolean);
-      if (connectedEntries.length === 0) continue;
-      const avgTime = connectedEntries.reduce((s, n) => s + new Date(n.createdAt).getTime(), 0) / connectedEntries.length;
-      const x = timeToX(avgTime);
-      const hash2 = tn.label.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-      const y = timelineY - 90 - (hash2 % 50);
-      const dx = wx - x, dy = wy - y;
-      if (Math.abs(dx) < 40 && Math.abs(dy) < 14) return tn;
+    for (const node of graph.nodes) {
+      if (node.type !== "tag") continue;
+      const pos = tp[node.id];
+      if (!pos) continue;
+      const dx = wx - pos.x, dy = wy - pos.y;
+      if (Math.abs(dx) < 40 && Math.abs(dy) < 14) return node;
     }
     return null;
   }, [graph]);
