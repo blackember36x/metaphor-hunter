@@ -34,6 +34,31 @@ const FONT_PRESETS = {
 
 const FONT_KEY = "lucid_font_v1";
 
+// ─── Animation settings ─────────────────────────────────────────────────────
+const ANIM_KEY = "lucid_animations_v1";
+const DEFAULT_ANIMS = {
+  ripple: true, bloom: true, captureGlow: true, graphBreathing: true,
+  titleShimmer: true, tagDrift: true, haptic: true, buttonBounce: true,
+  deleteDissolve: true, editGlow: true, milestoneParticles: true,
+};
+const ANIM_LABELS = {
+  ripple: "Ripple on save", bloom: "Card bloom", captureGlow: "Capture glow",
+  graphBreathing: "Graph breathing", titleShimmer: "Title shimmer",
+  tagDrift: "Tag drift", haptic: "Haptic feedback", buttonBounce: "Button bounce",
+  deleteDissolve: "Delete dissolve", editGlow: "Edit glow",
+  milestoneParticles: "Milestone particles",
+};
+function loadAnims() {
+  try {
+    const raw = localStorage.getItem(ANIM_KEY);
+    if (raw) return { ...DEFAULT_ANIMS, ...JSON.parse(raw) };
+  } catch (_) {}
+  return { ...DEFAULT_ANIMS };
+}
+function persistAnims(anims) {
+  localStorage.setItem(ANIM_KEY, JSON.stringify(anims));
+}
+
 // ─── Design tokens ───────────────────────────────────────────────────────────
 const SHARED = {
   mono:      "'JetBrains Mono', monospace",
@@ -176,8 +201,8 @@ const ONBOARDING_SLIDES = [
     accent: "Whether you're a writer, an artist, a musician, or simply someone who wants to feel more alive in their daily life — it all starts with what you choose to pay attention to.",
   },
   {
-    title: "Glimpse",
-    body: "When something catches your attention — a sight, a sound, a thought — capture it here in your own words. Don't overthink it. Just describe what you noticed and why it stood out.",
+    title: "Capture what you notice",
+    body: "When something catches your attention — a sight, a sound, a feeling — write it down here in your own words. Don't overthink it. Just describe what stood out and why.",
     accent: "There are no right answers. Only your attention.",
   },
   {
@@ -187,13 +212,13 @@ const ONBOARDING_SLIDES = [
   },
   {
     title: "Build the habit",
-    body: "Try to capture one observation a day. It doesn't need to be profound — mundane observations often reveal the most. Over time, you'll unlock new ways to reflect on what you've noticed.",
+    body: "Try to capture one observation a day. It doesn't need to be profound — mundane observations often reveal the most.",
     accent: "This isn't about quantity. It's about attention.",
   },
   {
     title: "Ready?",
     body: "Look around you right now. What catches your eye? What do you hear? Start there.",
-    accent: null,
+    accent: "As your practice grows, so will Lucid. There's more waiting for you down the road.",
   },
 ];
 
@@ -224,13 +249,19 @@ const getTagColor = (tag, customColors = {}) => {
 
 // ─── Entry pastel color (deterministic from id, returns hex) ─────────────────
 function entryPastelColor(id) {
-  let hash = 0;
+  // Use a better hash that spreads sequential numbers well
+  let hash = 0x9e3779b9; // golden ratio seed
   const s = String(id);
-  for (let i = 0; i < s.length; i++) hash = ((hash << 5) - hash + s.charCodeAt(i)) | 0;
-  const hue = Math.abs(hash) % 360;
+  for (let i = 0; i < s.length; i++) {
+    hash ^= s.charCodeAt(i);
+    hash = Math.imul(hash, 0x5bd1e995);
+    hash ^= hash >>> 15;
+  }
+  hash = Math.abs(hash);
+  const hue = hash % 360;
   // Convert HSL to hex so canvas alpha suffixes work
   const h = hue / 360;
-  const s2 = 0.45, l = 0.72;
+  const sat = 0.45, lit = 0.72;
   const hue2rgb = (p, q, t) => {
     if (t < 0) t += 1; if (t > 1) t -= 1;
     if (t < 1/6) return p + (q - p) * 6 * t;
@@ -238,8 +269,8 @@ function entryPastelColor(id) {
     if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
     return p;
   };
-  const q = l < 0.5 ? l * (1 + s2) : l + s2 - l * s2;
-  const p = 2 * l - q;
+  const q = lit < 0.5 ? lit * (1 + sat) : lit + sat - lit * sat;
+  const p = 2 * lit - q;
   const r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
   const g = Math.round(hue2rgb(p, q, h) * 255);
   const b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
@@ -334,14 +365,15 @@ function TagColorPicker({ tag, customColors, onSelect, onClose }) {
 }
 
 // ─── TagAnnotation (replaces TagPill — subtle colored text, not pills) ───────
-function TagAnnotation({ tag, onClick, removable, customColors, mobile: mobileProp }) {
+function TagAnnotation({ tag, onClick, removable, customColors, mobile: mobileProp, anims, driftIndex }) {
   const mobileHook = useIsMobile();
   const isMobile = mobileProp !== undefined ? mobileProp : mobileHook;
   const c = getTagColor(tag, customColors);
+  const driftEnabled = anims && anims.tagDrift && !removable && driftIndex !== undefined;
   return (
     <span
       onClick={onClick}
-      className="filter-btn"
+      className={`filter-btn${driftEnabled ? " tag-drift" : ""}`}
       title={removable ? "Remove" : `Filter by "${tag}"`}
       style={{
         display: "inline-flex", alignItems: "center", gap: 4,
@@ -354,6 +386,7 @@ function TagAnnotation({ tag, onClick, removable, customColors, mobile: mobilePr
         border: `1px solid ${c.dot}22`,
         cursor: onClick ? "pointer" : "default",
         ...(isMobile ? { minHeight: 28 } : {}),
+        ...(driftEnabled ? { animationDelay: `${(driftIndex || 0) * 0.4}s` } : {}),
       }}
     >
       {tag}
@@ -384,7 +417,7 @@ function HighlightedText({ text, query }) {
 }
 
 // ─── EntryCard ───────────────────────────────────────────────────────────────
-function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, searchQuery, visible, customColors }) {
+function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, searchQuery, visible, customColors, anims, isNew, isDissolving }) {
   const mobile = useIsMobile();
   const [showFull, setShowFull] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -451,11 +484,14 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
 
   if (editing) {
     return (
-      <div style={{
+      <div className={anims?.editGlow ? "edit-glow" : ""} style={{
         paddingBottom: 28, marginBottom: 8,
         borderBottom: `1px solid ${T.border}44`,
         display: "flex", flexDirection: "column", gap: 12,
         animation: `gentleIn 0.3s ${T.ease}`,
+        borderRadius: 12,
+        "--glow-color": T.accent + "66",
+        "--glow-color-strong": T.accent + "BB",
       }}>
         <textarea
           ref={editRef}
@@ -508,8 +544,12 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
     );
   }
 
+  const bloomClass = (anims?.bloom && isNew) ? "entry-bloom" : "";
+  const dissolveClass = (anims?.deleteDissolve && isDissolving) ? "entry-dissolve" : "";
+  const bounceClass = anims?.buttonBounce ? "bounce-btn" : "";
+
   return (
-    <div style={{
+    <div className={`${bloomClass} ${dissolveClass}`.trim()} style={{
       opacity: visible ? 1 : 0,
       transform: visible ? "translateY(0)" : "translateY(8px)",
       transition: `opacity 0.4s ${T.ease}, transform 0.4s ${T.ease}`,
@@ -531,7 +571,7 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
       {/* Tags as subtle annotations */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
         {entry.tags.length > 0
-          ? entry.tags.map((t) => <TagAnnotation key={t} tag={t} customColors={customColors} onClick={() => onTagClick(t)} />)
+          ? entry.tags.map((t, i) => <TagAnnotation key={t} tag={t} customColors={customColors} anims={anims} driftIndex={i} onClick={() => onTagClick(t)} />)
           : null
         }
       </div>
@@ -552,14 +592,14 @@ function EntryCard({ entry, onTagClick, onEdit, onDelete, onDeleteRevision, sear
 
         <span style={{ flex: 1 }} />
 
-        <button onClick={startEdit} title="Edit" style={{ ...subtleBtn, color: T.textDim }}>edit</button>
+        <button onClick={startEdit} title="Edit" className={bounceClass} style={{ ...subtleBtn, color: T.textDim }}>edit</button>
         {confirmDelete ? (
           <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
-            <button onClick={() => onDelete(entry.id)} style={{ ...subtleBtn, color: T.danger }}>yes</button>
-            <button onClick={() => setConfirmDelete(false)} style={{ ...subtleBtn, color: T.textDim }}>no</button>
+            <button onClick={() => onDelete(entry.id)} className={bounceClass} style={{ ...subtleBtn, color: T.danger }}>yes</button>
+            <button onClick={() => setConfirmDelete(false)} className={bounceClass} style={{ ...subtleBtn, color: T.textDim }}>no</button>
           </span>
         ) : (
-          <button onClick={() => setConfirmDelete(true)} title="Delete" style={{ ...subtleBtn, color: T.textDim }}>remove</button>
+          <button onClick={() => setConfirmDelete(true)} title="Delete" className={bounceClass} style={{ ...subtleBtn, color: T.textDim }}>remove</button>
         )}
       </div>
 
@@ -643,22 +683,52 @@ function SaveBadge({ status }) {
 // ─── Onboarding ──────────────────────────────────────────────────────────────
 function Onboarding({ onComplete }) {
   const [slide, setSlide] = useState(0);
+  const [dir, setDir] = useState(0); // 1 = forward, -1 = back
+  const [slideKey, setSlideKey] = useState(0); // force remount for animation
+  const touchRef = useRef({ startX: 0, startY: 0 });
   const mobile = useIsMobile();
-  const current = ONBOARDING_SLIDES[slide];
-  const isLast = slide === ONBOARDING_SLIDES.length - 1;
+  const total = ONBOARDING_SLIDES.length;
+  const isLast = slide === total - 1;
 
   const complete = () => {
     localStorage.setItem(ONBOARDING_KEY, "true");
     onComplete();
   };
 
+  const goTo = (next) => {
+    if (next === slide || next < 0 || next >= total) return;
+    setDir(next > slide ? 1 : -1);
+    setSlide(next);
+    setSlideKey((k) => k + 1);
+  };
+
+  const handleTouchStart = (e) => {
+    touchRef.current.startX = e.touches[0].clientX;
+    touchRef.current.startY = e.touches[0].clientY;
+  };
+  const handleTouchEnd = (e) => {
+    const dx = e.changedTouches[0].clientX - touchRef.current.startX;
+    const dy = e.changedTouches[0].clientY - touchRef.current.startY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0 && slide < total - 1) goTo(slide + 1);
+      else if (dx > 0 && slide > 0) goTo(slide - 1);
+    }
+  };
+
+  const current = ONBOARDING_SLIDES[slide];
+
   return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 100,
-      background: T.bg, display: "flex",
-      flexDirection: "column", alignItems: "center", justifyContent: "center",
-      padding: mobile ? "40px 28px" : "60px 40px",
-    }}>
+    <div
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        position: "fixed", inset: 0, zIndex: 100,
+        background: T.bg, display: "flex",
+        flexDirection: "column", alignItems: "center", justifyContent: "center",
+        padding: mobile ? "40px 28px" : "60px 40px",
+        overflow: "hidden",
+      }}
+    >
       {/* Skip */}
       <button
         onClick={complete}
@@ -666,14 +736,21 @@ function Onboarding({ onComplete }) {
           position: "absolute", top: mobile ? 20 : 28, right: mobile ? 20 : 28,
           background: "none", border: "none", cursor: "pointer",
           fontFamily: T.body, fontSize: 14,
-          color: T.textDim, fontStyle: "italic",
+          color: T.textDim, fontStyle: "italic", zIndex: 2,
         }}
       >
         skip
       </button>
 
-      {/* Content */}
-      <div style={{ maxWidth: 420, textAlign: "center" }}>
+      {/* Slide content — single enter animation, remounted via key */}
+      <div
+        key={slideKey}
+        style={{
+          maxWidth: 420, textAlign: "center",
+          animation: dir !== 0 ? `slideIn 0.3s ${T.ease} both` : "none",
+          "--slide-enter-from": dir >= 0 ? "80px" : "-80px",
+        }}
+      >
         <h2 style={{
           fontFamily: T.display,
           fontSize: mobile ? 26 : 32, color: T.text,
@@ -713,7 +790,7 @@ function Onboarding({ onComplete }) {
           {ONBOARDING_SLIDES.map((_, i) => (
             <span
               key={i}
-              onClick={() => setSlide(i)}
+              onClick={() => goTo(i)}
               style={{
                 width: i === slide ? 20 : 5, height: 5,
                 borderRadius: 3, cursor: "pointer",
@@ -727,7 +804,7 @@ function Onboarding({ onComplete }) {
         <div style={{ display: "flex", gap: 14 }}>
           {slide > 0 && (
             <button
-              onClick={() => setSlide((s) => s - 1)}
+              onClick={() => goTo(slide - 1)}
               className="press"
               style={{
                 background: "none", border: `1px solid ${T.border}`,
@@ -739,7 +816,7 @@ function Onboarding({ onComplete }) {
             </button>
           )}
           <button
-            onClick={isLast ? complete : () => setSlide((s) => s + 1)}
+            onClick={isLast ? complete : () => goTo(slide + 1)}
             className="press"
             style={{
               background: isLast ? T.accent : "none",
@@ -861,7 +938,7 @@ function generateSampleData() {
 }
 
 // ─── Settings panel (iOS sheet on mobile) ────────────────────────────────────
-function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, onLoadSampleData, theme, onToggleTheme, fontKey, onChangeFont }) {
+function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, onLoadSampleData, theme, onToggleTheme, fontKey, onChangeFont, anims, onToggleAnim }) {
   const mobile = useIsMobile();
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmSample, setConfirmSample] = useState(false);
@@ -942,6 +1019,35 @@ function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, onLoadS
                 }}
               >
                 {preset.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Motion toggles */}
+        <div style={{ padding: "16px 0", borderBottom: `1px solid ${T.border}44` }}>
+          <p style={{
+            margin: "0 0 10px", fontFamily: T.body, fontSize: 13,
+            color: T.textDim, fontStyle: "italic",
+          }}>
+            Motion
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {Object.keys(ANIM_LABELS).map((key) => (
+              <button
+                key={key}
+                onClick={() => onToggleAnim(key)}
+                style={{
+                  background: anims[key] ? T.accent : T.bg,
+                  color: anims[key] ? T.bg : T.textMuted,
+                  border: `1px solid ${anims[key] ? T.accent : T.border}`,
+                  borderRadius: 20, padding: "6px 14px",
+                  cursor: "pointer", fontSize: 12,
+                  fontFamily: T.body, fontStyle: "italic",
+                  transition: `all 0.2s ${T.ease}`,
+                }}
+              >
+                {ANIM_LABELS[key]}
               </button>
             ))}
           </div>
@@ -1066,10 +1172,38 @@ function SettingsPanel({ onClose, onReset, onImport, onReplayOnboarding, onLoadS
 }
 
 // ─── Milestone banner ────────────────────────────────────────────────────────
-function MilestoneBanner({ message }) {
+function MilestoneBanner({ message, anims }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!message || !anims?.milestoneParticles || !containerRef.current) return;
+    const el = containerRef.current;
+    const particles = [];
+    const colors = [T.accent, T.accent + "CC", T.accent + "88", T.text + "44"];
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement("div");
+      p.className = "milestone-particle";
+      const size = 2 + Math.random() * 2.5;
+      const px = (Math.random() - 0.5) * 120;
+      const dur = 2.5 + Math.random() * 1.5;
+      p.style.width = size + "px";
+      p.style.height = size + "px";
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.left = (50 + (Math.random() - 0.5) * 80) + "%";
+      p.style.bottom = "100%";
+      p.style.setProperty("--px", px + "px");
+      p.style.setProperty("--dur", dur + "s");
+      p.style.animationDelay = (Math.random() * 0.8) + "s";
+      el.appendChild(p);
+      particles.push(p);
+    }
+    const timer = setTimeout(() => particles.forEach((p) => p.remove()), 5000);
+    return () => { clearTimeout(timer); particles.forEach((p) => p.remove()); };
+  }, [message, anims]);
+
   if (!message) return null;
   return (
-    <div className="glass" style={{
+    <div ref={containerRef} className="glass" style={{
       position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
       zIndex: 50, background: T.surface + "EE", border: `1px solid ${T.accentSoft}`,
       borderRadius: 100, padding: "12px 28px",
@@ -1090,7 +1224,7 @@ function MilestoneBanner({ message }) {
 }
 
 // ─── GraphView ───────────────────────────────────────────────────────────────
-function GraphView({ entries, customColors, onTagClick }) {
+function GraphView({ entries, customColors, onTagClick, anims }) {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const simRef = useRef(null);
@@ -1269,7 +1403,7 @@ function GraphView({ entries, customColors, onTagClick }) {
       ctx.stroke();
     });
 
-    graph.nodes.forEach((node) => {
+    graph.nodes.forEach((node, i) => {
       const isHovered = hover && hover.id === node.id;
       const isConnected = hover && hoverConnected.has(node.id);
       const dimmed = hover && !isHovered && !isConnected;
@@ -1303,8 +1437,9 @@ function GraphView({ entries, customColors, onTagClick }) {
         ctx.fillText(node.label, node.x, node.y);
         ctx.textBaseline = "alphabetic";
       } else {
+        const breathOffset = anims?.graphBreathing ? Math.sin(Date.now() / 1000 + i * 0.5) * 0.8 : 0;
         ctx.beginPath();
-        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+        ctx.arc(node.x, node.y, node.radius + breathOffset, 0, Math.PI * 2);
         ctx.fillStyle = dimmed ? node.color.dot + "15" : (isHovered || isConnected) ? node.color.dot + "BB" : node.color.dot + "55";
         ctx.fill();
 
@@ -1374,7 +1509,7 @@ function GraphView({ entries, customColors, onTagClick }) {
     ctx.textAlign = "left";
     const tagCount = graph.nodes.filter((n) => n.type === "tag").length;
     const entryCount = graph.nodes.filter((n) => n.type === "entry").length;
-    ctx.fillText(`${entryCount} entries · ${tagCount} tags`, 16, h - 14);
+    ctx.fillText(`${entryCount} entries \u00B7 ${tagCount} tags`, 16, h - 14);
   }, [graph]);
 
   const renderTimeline = useCallback(() => {
@@ -1757,8 +1892,9 @@ function GraphView({ entries, customColors, onTagClick }) {
     const pos = getCanvasPos(e);
     const { dragging, panning, panStart, panOffset, zoom } = interRef.current;
     if (dragging && graphMode === "graph") {
-      dragging.x = (pos.x - panOffset.x) / zoom;
-      dragging.y = (pos.y - panOffset.y) / zoom;
+      const wx = (pos.x - panOffset.x) / zoom;
+      const wy = (pos.y - panOffset.y) / zoom;
+      dragging.x = wx; dragging.y = wy;
       dragging.vx = 0; dragging.vy = 0;
       if (simRef.current) simRef.current.alpha = Math.max(simRef.current.alpha, 0.1);
     } else if (panning) {
@@ -1827,8 +1963,9 @@ function GraphView({ entries, customColors, onTagClick }) {
       const pos = getCanvasPos(touch);
       const { dragging, panning, panStart, panOffset, zoom } = interRef.current;
       if (dragging) {
-        dragging.x = (pos.x - panOffset.x) / zoom;
-        dragging.y = (pos.y - panOffset.y) / zoom;
+        const wx = (pos.x - panOffset.x) / zoom;
+        const wy = (pos.y - panOffset.y) / zoom;
+        dragging.x = wx; dragging.y = wy;
         dragging.vx = 0; dragging.vy = 0;
         if (simRef.current) simRef.current.alpha = Math.max(simRef.current.alpha, 0.1);
       } else if (panning) {
@@ -2251,8 +2388,21 @@ export default function App() {
   const [showSettings,   setShowSettings]   = useState(false);
   const [showControls,   setShowControls]   = useState(false);
   const [milestoneMsg,   setMilestoneMsg]   = useState(null);
+  const [anims,        setAnims]        = useState(loadAnims);
+  const [newEntryId,   setNewEntryId]   = useState(null);
+  const [dissolvingId, setDissolvingId] = useState(null);
+  const [captureGlow,  setCaptureGlow]  = useState(false);
   const textareaRef = useRef(null);
+  const captureButtonRef = useRef(null);
   const nextId      = useRef(1);
+
+  const toggleAnim = (key) => {
+    setAnims((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      persistAnims(next);
+      return next;
+    });
+  };
 
   useEffect(() => {
     const saved = loadEntries();
@@ -2276,9 +2426,28 @@ export default function App() {
     if (loaded && textareaRef.current) textareaRef.current.focus();
   }, [loaded]);
 
+  useEffect(() => {
+    const handleGlobalKey = (e) => {
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || document.activeElement?.contentEditable === "true") return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return;
+      if (showSettings || showOnboarding) return;
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKey);
+    return () => window.removeEventListener("keydown", handleGlobalKey);
+  }, [showSettings, showOnboarding]);
+
   const allTags = [...new Set(entries.flatMap((e) => e.tags))].sort();
 
   const handleTagKey = (e) => {
+    if (e.key === "Enter" && !tagInput.trim() && text.trim()) {
+      e.preventDefault();
+      handleSubmit();
+      return;
+    }
     if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
       e.preventDefault();
       const tag = tagInput.trim().toLowerCase().replace(/,/g, "");
@@ -2321,8 +2490,45 @@ export default function App() {
     setTimeout(() => setVisibleIds((p) => new Set([...p, id])), 40);
     setText("");
     setPendingTags([]);
+    setTagInput("");
     setDisplayCount(1);
     save(newEntries);
+
+    // Refocus textarea for quick consecutive notes
+    setTimeout(() => textareaRef.current?.focus(), 50);
+
+    // ── Animations on save ──
+    // Card bloom
+    if (anims.bloom) {
+      setNewEntryId(id);
+      setTimeout(() => setNewEntryId(null), 500);
+    }
+
+    // Haptic feedback
+    if (anims.haptic) {
+      navigator.vibrate?.(10);
+    }
+
+    // Capture glow
+    if (anims.captureGlow) {
+      setCaptureGlow(true);
+      setTimeout(() => setCaptureGlow(false), 1000);
+    }
+
+    // Ripple on save
+    if (anims.ripple && captureButtonRef.current) {
+      const btn = captureButtonRef.current;
+      const rect = btn.getBoundingClientRect();
+      const ripple = document.createElement("div");
+      ripple.className = "save-ripple";
+      ripple.style.background = T.accent + "33";
+      ripple.style.left = (rect.width / 2) + "px";
+      ripple.style.top = (rect.height / 2) + "px";
+      btn.style.position = "relative";
+      btn.style.overflow = "visible";
+      btn.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 650);
+    }
 
     const newCount = newEntries.length;
     const milestone = MILESTONES.find((m) => m.count === newCount);
@@ -2398,13 +2604,28 @@ export default function App() {
   };
 
   const handleDelete = (id) => {
-    const newEntries = entries.filter((e) => e.id !== id);
-    setEntries(newEntries);
-    save(newEntries);
+    if (anims.deleteDissolve) {
+      setDissolvingId(id);
+      setTimeout(() => {
+        setDissolvingId(null);
+        const newEntries = entries.filter((e) => e.id !== id);
+        setEntries(newEntries);
+        save(newEntries);
+      }, 400);
+    } else {
+      const newEntries = entries.filter((e) => e.id !== id);
+      setEntries(newEntries);
+      save(newEntries);
+    }
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
+    if (e.key === "Enter" && !e.metaKey && !e.ctrlKey && !e.shiftKey && text.trim()) {
+      e.preventDefault();
+      const tagInputEl = document.querySelector('[data-tag-input]');
+      if (tagInputEl) tagInputEl.focus();
+    }
   };
 
   // Filtering
@@ -2491,10 +2712,12 @@ export default function App() {
           onToggleTheme={toggleTheme}
           fontKey={fontKey}
           onChangeFont={changeFont}
+          anims={anims}
+          onToggleAnim={toggleAnim}
         />
       )}
 
-      <MilestoneBanner message={milestoneMsg} />
+      <MilestoneBanner message={milestoneMsg} anims={anims} />
 
       {/* ── Header — minimal, just title and essentials ── */}
       <header className="glass" style={{
@@ -2503,10 +2726,11 @@ export default function App() {
         position: "sticky", top: 0, background: T.bg + "DD", zIndex: 10,
       }}>
         <div>
-          <h1 style={{
+          <h1 className={anims.titleShimmer ? "title-shimmer" : ""} style={{
             margin: 0, fontFamily: T.display,
             fontSize: 20, color: T.text, fontWeight: 400,
             letterSpacing: "-0.02em",
+            "--shimmer-color": T.accent + "88",
           }}>
             lucid
           </h1>
@@ -2523,7 +2747,7 @@ export default function App() {
           {/* Search/filter toggle */}
           <button
             onClick={() => setShowControls((p) => !p)}
-            className="press"
+            className={`press${anims.buttonBounce ? " bounce-btn" : ""}`}
             style={{
               background: showControls ? T.accentSoft : "none",
               border: "none", borderRadius: 100,
@@ -2567,7 +2791,13 @@ export default function App() {
       <main style={{ maxWidth: 600, margin: "0 auto", padding: mobile ? "28px 20px 0" : "48px 24px 0" }}>
 
         {/* ── Capture zone — open, inviting, no box ── */}
-        <div style={{ marginBottom: mobile ? 36 : 48 }}>
+        <div style={{
+          marginBottom: mobile ? 36 : 48,
+          borderRadius: 12,
+          padding: "16px 20px",
+          transition: "box-shadow 1s ease-out",
+          boxShadow: captureGlow ? `0 0 20px ${T.accent}44` : "0 0 0px transparent",
+        }}>
           <textarea
             ref={textareaRef}
             value={text}
@@ -2606,9 +2836,17 @@ export default function App() {
               />
             ))}
             <input
+              data-tag-input
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleTagKey}
+              onBlur={() => {
+                if (tagInput.trim()) {
+                  const tag = tagInput.trim().toLowerCase().replace(/,/g, "");
+                  if (tag && !pendingTags.includes(tag)) setPendingTags((p) => [...p, tag]);
+                  setTagInput("");
+                }
+              }}
               placeholder={pendingTags.length === 0 ? "tags…" : ""}
               style={{
                 background: "transparent", border: "none",
@@ -2621,7 +2859,8 @@ export default function App() {
             <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
               <SaveBadge status={saveStatus} />
               <button
-                className="submit-btn press"
+                ref={captureButtonRef}
+                className={`submit-btn press${anims.buttonBounce ? " bounce-btn" : ""}`}
                 onClick={handleSubmit}
                 disabled={!text.trim()}
                 style={{
@@ -2633,6 +2872,7 @@ export default function App() {
                   fontSize: 14,
                   color: text.trim() ? T.bg : T.textDim,
                   cursor: text.trim() ? "pointer" : "default",
+                  position: "relative", overflow: "visible",
                   ...(mobile ? { minHeight: 40 } : {}),
                 }}
               >
@@ -2653,6 +2893,7 @@ export default function App() {
           <GraphView
             entries={entries}
             customColors={customColors}
+            anims={anims}
             onTagClick={(tag) => {
               setActiveFilter(tag);
               setViewMode("list");
@@ -2732,6 +2973,9 @@ export default function App() {
                       visible={visibleIds.has(entry.id)}
                       searchQuery={searchText}
                       customColors={customColors}
+                      anims={anims}
+                      isNew={entry.id === newEntryId}
+                      isDissolving={entry.id === dissolvingId}
                       onTagClick={(tag) => setActiveFilter(activeFilter === tag ? null : tag)}
                       onEdit={handleEdit}
                       onDelete={handleDelete}

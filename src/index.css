@@ -22,6 +22,97 @@ input::placeholder { color: #9C8B78; }
 .filter-btn { transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 .filter-btn:active { transform: scale(0.96); }
 
+/* ─── Animation: Card bloom ─── */
+@keyframes entryBloom {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.entry-bloom {
+  animation: entryBloom 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* ─── Animation: Ripple on save ─── */
+@keyframes saveRipple {
+  from { transform: translate(-50%, -50%) scale(0.3); opacity: 0.6; }
+  to { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+.save-ripple {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: saveRipple 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ─── Animation: Button bounce ─── */
+@keyframes buttonBounce {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.93); }
+  70% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+.bounce-btn:active {
+  animation: buttonBounce 0.3s ease;
+}
+
+/* ─── Animation: Delete smoke fade ─── */
+@keyframes smokeFade {
+  0% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  50% { opacity: 0.5; transform: translateY(-5px) scale(1.02); filter: blur(2px); }
+  100% { opacity: 0; transform: translateY(-15px) scale(1.05); filter: blur(6px); }
+}
+.entry-dissolve {
+  animation: smokeFade 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ─── Animation: Tag drift ─── */
+@keyframes tagDrift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+.tag-drift {
+  animation: tagDrift 3s ease-in-out infinite;
+}
+
+/* ─── Animation: Title glow ─── */
+@keyframes titleGlow {
+  0%, 100% { text-shadow: 0 0 2px var(--shimmer-color, #C4A07044); }
+  50% { text-shadow: 0 0 20px var(--shimmer-color, #C4A070AA), 0 0 40px var(--shimmer-color, #C4A07055); }
+}
+.title-shimmer {
+  display: inline-block;
+  animation: titleGlow 4s ease-in-out infinite;
+}
+
+/* ─── Animation: Edit glow ─── */
+@keyframes editGlowPulse {
+  0%, 100% { box-shadow: 0 0 8px var(--glow-color, #C4A07055), inset 0 0 8px var(--glow-color, #C4A07022); }
+  50% { box-shadow: 0 0 20px var(--glow-color-strong, #C4A070AA), inset 0 0 12px var(--glow-color, #C4A07033); }
+}
+.edit-glow {
+  animation: editGlowPulse 2.5s ease-in-out infinite;
+}
+
+/* ─── Animation: Milestone particles ─── */
+@keyframes particleFloat {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  15% { opacity: 1; transform: translate(var(--px, 0), -10px) scale(1); }
+  100% { opacity: 0; transform: translate(var(--px, 0), -80px) scale(0.3); }
+}
+.milestone-particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particleFloat var(--dur, 3s) ease-out forwards;
+}
+
+/* ─── Animation: Onboarding slides ─── */
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(var(--slide-enter-from, 80px)); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateX(-50%) translateY(16px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
